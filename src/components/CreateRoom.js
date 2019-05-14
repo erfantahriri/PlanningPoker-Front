@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { withRouter } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -9,6 +10,8 @@ import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import withStyles from '@material-ui/core/styles/withStyles';
 import { createRoom } from '../services/api';
+import toastr from 'toastr';
+
 
 const styles = theme => ({
 	main: {
@@ -54,15 +57,23 @@ export class CreateRoom extends Component {
 
 	createRoomOnClick = (event) => {
 		event.preventDefault();
-		console.log(this.state.title);
-		console.log(this.state.description);
-		console.log(this.state.creator);
 		createRoom(
 			this.state.title,
 			this.state.description,
 			this.state.creator
 		)
-			.then(rooms => { console.log(rooms) })
+			.then(data => {
+				if (data) {
+					localStorage.setItem("accessToken", data.creator.access_token);
+					sessionStorage.setItem("roomUid", data.uid);
+					sessionStorage.setItem("roomTitle", data.title);
+					sessionStorage.setItem("roomDescription", data.description);
+					sessionStorage.setItem("participantName", data.creator.name);
+					this.props.history.push("/rooms/" + data.uid);
+				} else {
+					toastr.error("Something went wrong!");
+				}
+			})
 			.catch(error => console.log(error));
 	}
 
@@ -118,4 +129,4 @@ CreateRoom.propTypes = {
 	classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(CreateRoom);
+export default withRouter(withStyles(styles)(CreateRoom))
