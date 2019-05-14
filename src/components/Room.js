@@ -18,6 +18,7 @@ import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
 import CreateIssueComponent from './CreateIssue'
+import Board from './Board'
 
 const drawerWidth = 240;
 
@@ -170,7 +171,7 @@ export class Room extends Component {
         </Drawer>
         <main className={this.classes.content}>
           <div className={this.classes.toolbar} />
-
+          <Board />
         </main>
         <Drawer
           className={this.classes.drawer}
