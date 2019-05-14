@@ -69,6 +69,7 @@ export class CreateRoom extends Component {
 					sessionStorage.setItem("roomTitle", data.title);
 					sessionStorage.setItem("roomDescription", data.description);
 					sessionStorage.setItem("participantName", data.creator.name);
+					sessionStorage.setItem("participantUid", data.creator.uid);
 					this.props.history.push("/rooms/" + data.uid);
 				} else {
 					toastr.error("Something went wrong!");
@@ -92,19 +93,19 @@ export class CreateRoom extends Component {
 					<form className={this.classes.form}>
 						<FormControl margin="normal" required fullWidth>
 							<InputLabel htmlFor="title">Room Title</InputLabel>
-							<Input id="title" name="title" autoComplete="title"
+							<Input id="title" name="title"
 								autoFocus value={this.state.title}
 								onChange={this.handleInputChange} />
 						</FormControl>
 						<FormControl margin="normal" fullWidth>
 							<InputLabel htmlFor="description">Room Description</InputLabel>
-							<Input name="description" id="description" autoComplete="description"
+							<Input name="description" id="description"
 								value={this.state.description}
 								onChange={this.handleInputChange} />
 						</FormControl>
 						<FormControl margin="normal" required fullWidth>
 							<InputLabel htmlFor="creator">Creator Name</InputLabel>
-							<Input name="creator" id="creator" autoComplete="creator"
+							<Input name="creator" id="creator"
 								value={this.state.creator}
 								onChange={this.handleInputChange} />
 						</FormControl>
