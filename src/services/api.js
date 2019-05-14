@@ -33,3 +33,52 @@ export const createRoom = (title, description, creator_name) => {
 		})
 		.catch(err => console.log(err))
 }
+
+export const getRoomIssues = (roomUid) => {
+	return fetch(urls.getRoomIssues.replace('roomUid', roomUid), {
+		method: 'GET',
+		headers: {
+			"Authorization": localStorage.getItem('accessToken')
+		}
+	})
+		.then(response => {
+			if (response.status === 200) {
+				return response.json();
+			}
+		})
+		.catch(err => console.log(err))
+}
+
+export const getRoomParticipants = (roomUid) => {
+	return fetch(urls.getRoomParticipants.replace('roomUid', roomUid), {
+		method: 'GET',
+		headers: {
+			"Authorization": localStorage.getItem('accessToken')
+		}
+	})
+		.then(response => {
+			if (response.status === 200) {
+				return response.json();
+			}
+		})
+		.catch(err => console.log(err))
+}
+
+export const createIssue = (roomUid, title) => {
+	return fetch(urls.createIssue.replace('roomUid', roomUid), {
+		method: 'POST',
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": localStorage.getItem('accessToken')
+		},
+		body: JSON.stringify({
+			title: title,
+		})
+	})
+		.then(response => {
+			if (response.status === 201 ) {
+				return response.json();
+			}
+		})
+		.catch(err => console.log(err))
+}
