@@ -20,9 +20,9 @@ export class Main extends Component {
 
   getActionComponent = () => {
     if (this.state.action === "create") {
-      return (<CreateRoom/>);
+      return (<CreateRoom />);
     } else if (this.state.action === "join") {
-      return (<JoinRoom/>);
+      return (<JoinRoom />);
     } else {
       return null;
     }
