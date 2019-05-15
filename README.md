@@ -1,6 +1,14 @@
 # PlanningPoker-Front
 
+This is an font-end client for PlanningPoker application
+This application is created to handle PlanningPoker estimating sessions of scrum agile methodology
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+## Addresses
+
+* [PlanningPoker Website](http://scrumplanning.ir)
+* [PlanningPoker API Doc](http://82.102.10.119:8080/redoc/) 
+* [PlanningPoker API](http://82.102.10.119:8080) 
 
 ## Available Scripts
 
@@ -68,3 +76,18 @@ This section has moved here: https://facebook.github.io/create-react-app/docs/de
 ### `npm run build` fails to minify
 
 This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+
+## Get involved!
+
+We are happy to receive PR, bug reports, fixes and other improvements.
+
+Please report bugs via the
+[github issue tracker](https://github.com/erfantahriri/PlanningPoker-Front/issues).
+
+Master [git repository](https://github.com/erfantahriri/PlanningPoker-Front):
+
+* `git clone https://github.com/erfantahriri/PlanningPoker-Front`
+
+## Licensing
+
+This library is GPL-3.0 licenced.
