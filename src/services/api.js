@@ -6,6 +6,7 @@ const urls = {
 	getRoomIssues: baseUrl + "/v1/rooms/roomUid/issues",
 	getRoomParticipants: baseUrl + "/v1/rooms/roomUid/participants",
 	createIssue: baseUrl + "/v1/rooms/roomUid/issues",
+	joinRoom: baseUrl + "/v1/rooms/roomUid/join",
 }
 
 export const getRooms = () => {
@@ -76,7 +77,26 @@ export const createIssue = (roomUid, title) => {
 		})
 	})
 		.then(response => {
-			if (response.status === 201 ) {
+			if (response.status === 201) {
+				return response.json();
+			}
+		})
+		.catch(err => console.log(err))
+}
+
+export const joinRoom = (roomUid, name) => {
+	return fetch(urls.joinRoom.replace('roomUid', roomUid), {
+		method: 'POST',
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": localStorage.getItem('accessToken')
+		},
+		body: JSON.stringify({
+			name: name,
+		})
+	})
+		.then(response => {
+			if (response.status === 201 || response.status === 200) {
 				return response.json();
 			}
 		})
