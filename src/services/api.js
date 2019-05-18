@@ -4,6 +4,8 @@ const urls = {
 	getRoom: baseUrl + "/v1/rooms/",
 	createRoom: baseUrl + "/v1/rooms/",
 	getRoomIssues: baseUrl + "/v1/rooms/roomUid/issues",
+	getRoomCurrentIssue: baseUrl + "/v1/rooms/roomUid/current_issue",
+	setRoomCurrentIssue: baseUrl + "/v1/rooms/roomUid/current_issue",
 	getRoomParticipants: baseUrl + "/v1/rooms/roomUid/participants",
 	createIssue: baseUrl + "/v1/rooms/roomUid/issues",
 	joinRoom: baseUrl + "/v1/rooms/roomUid/join",
@@ -41,6 +43,40 @@ export const getRoomIssues = (roomUid) => {
 		headers: {
 			"Authorization": localStorage.getItem('accessToken')
 		}
+	})
+		.then(response => {
+			if (response.status === 200) {
+				return response.json();
+			}
+		})
+		.catch(err => console.log(err))
+}
+
+export const getRoomCurrentIssue = (roomUid) => {
+	return fetch(urls.getRoomCurrentIssue.replace('roomUid', roomUid), {
+		method: 'GET',
+		headers: {
+			"Authorization": localStorage.getItem('accessToken')
+		}
+	})
+		.then(response => {
+			if (response.status === 200) {
+				return response.json();
+			}
+		})
+		.catch(err => console.log(err))
+}
+
+export const setRoomCurrentIssue = (roomUid, issueUid) => {
+	return fetch(urls.setRoomCurrentIssue.replace('roomUid', roomUid), {
+		method: 'POST',
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": localStorage.getItem('accessToken')
+		},
+		body: JSON.stringify({
+			issue_uid: issueUid,
+		})
 	})
 		.then(response => {
 			if (response.status === 200) {

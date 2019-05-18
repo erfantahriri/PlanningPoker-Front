@@ -64,7 +64,8 @@ export class Room extends Component {
     issues: [],
     participants: [],
     open: false,
-    issueTitle: undefined
+    issueTitle: undefined,
+    currentIssue: undefined
   }
 
   handleClickOpen = () => {
@@ -85,18 +86,18 @@ export class Room extends Component {
 
   handleCreateIssue = () => {
     createIssue(this.roomUid, this.state.issueTitle)
-    .then(data => {
-      if (data) {
-        this.setState(Object.assign(
-          {},
-          this.state,
-          { open: false, issues: [...this.state.issues, data] }
-        ));
-      } else {
-        toastr.error("Something went wrong!");
-      }
-    })
-    .catch(error => console.log(error));
+      .then(data => {
+        if (data) {
+          this.setState(Object.assign(
+            {},
+            this.state,
+            { open: false, issues: [...this.state.issues, data] }
+          ));
+        } else {
+          toastr.error("Something went wrong!");
+        }
+      })
+      .catch(error => console.log(error));
   };
 
   handleIssueTitleInputChange = (event) => {
@@ -105,7 +106,16 @@ export class Room extends Component {
       this.state,
       { issueTitle: event.target.value }
     ));
-	}
+  }
+
+  issueItemOnClick = (issue) => {
+    this.setState(Object.assign(
+      {},
+      this.state,
+      { currentIssue: issue }
+    ));
+    this.ws.send(JSON.stringify({message: "Hello World!"}));
+  }
 
   componentDidMount() {
     this.roomUid = this.props.match.params.roomUid;
@@ -193,7 +203,7 @@ export class Room extends Component {
         </Drawer>
         <main className={this.classes.content}>
           <div className={this.classes.toolbar} />
-          <Board />
+          <Board currentIssue={this.state.currentIssue} />
         </main>
         <Drawer
           className={this.classes.drawer}
@@ -208,7 +218,8 @@ export class Room extends Component {
           <Divider />
           <List>
             {this.state.issues.map((issue, index) => (
-              <ListItem button key={issue.uid}>
+              <ListItem button key={issue.uid}
+                onClick={this.issueItemOnClick.bind(this, issue)} >
                 <ListItemIcon><CheckCircleOutline /></ListItemIcon>
                 <ListItemText primary={issue.title} />
               </ListItem>
