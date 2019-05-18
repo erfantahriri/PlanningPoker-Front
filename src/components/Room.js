@@ -21,6 +21,7 @@ import CreateIssueComponent from './CreateIssue'
 import Board from './Board'
 
 const drawerWidth = 240;
+const BaseRoomWsUrl = `ws://127.0.0.1:8000/ws/rooms/`
 
 const styles = theme => ({
   root: {
@@ -56,6 +57,7 @@ const styles = theme => ({
 
 export class Room extends Component {
   roomUid = undefined;
+  ws = undefined;
   classes = this.props.classes;
 
   state = {
@@ -107,6 +109,7 @@ export class Room extends Component {
 
   componentDidMount() {
     this.roomUid = this.props.match.params.roomUid;
+    this.ws = new WebSocket(BaseRoomWsUrl + this.roomUid + '/')
 
     getRoomIssues(this.roomUid)
       .then(data => {
@@ -137,6 +140,25 @@ export class Room extends Component {
         }
       })
       .catch(error => console.log(error));
+
+      this.ws.onopen = () => {
+        // on connecting, do nothing but log it to the console
+        console.log('connected')
+      }
+  
+      this.ws.onmessage = evt => {
+        // on receiving a message, add it to the list of messages
+        const message = JSON.parse(evt.data)
+        console.log(message)
+      }
+  
+      this.ws.onclose = () => {
+        console.log('disconnected')
+        // automatically try to reconnect on connection loss
+        this.setState({
+          ws: new WebSocket(BaseRoomWsUrl + this.roomUid + '/'),
+        })
+      }
   }
 
   render() {
