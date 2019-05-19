@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import StoryPointCard from './Card'
+import StoryPointCard from './Card';
+import VoteCard from './VoteCard';
 
 export class Board extends Component {
 	storyPoints = ["0", "1/2", "1", "2", "3", "5", "8", "13", "20", "40", "100", "?"];
@@ -8,6 +9,10 @@ export class Board extends Component {
 			<div>
 				<div>
 					{this.props.currentIssue ? this.props.currentIssue.title : ""}
+					<div>
+						{this.props.currentIssue
+							&& this.props.currentIssue.votes.map(vote => <VoteCard vote={vote} />)}
+					</div>
 				</div>
 				<div style={{
 					position: "absolute",
