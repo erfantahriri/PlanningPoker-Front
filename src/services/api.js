@@ -6,6 +6,7 @@ const urls = {
 	getRoomIssues: baseUrl + "/v1/rooms/roomUid/issues",
 	getRoomCurrentIssue: baseUrl + "/v1/rooms/roomUid/current_issue",
 	setRoomCurrentIssue: baseUrl + "/v1/rooms/roomUid/current_issue",
+	getRoomIssueVotes: baseUrl + "/v1/rooms/roomUid/issues/issueUid/votes",
 	getRoomParticipants: baseUrl + "/v1/rooms/roomUid/participants",
 	createIssue: baseUrl + "/v1/rooms/roomUid/issues",
 	joinRoom: baseUrl + "/v1/rooms/roomUid/join",
@@ -78,6 +79,23 @@ export const setRoomCurrentIssue = (roomUid, issueUid) => {
 			issue_uid: issueUid,
 		})
 	})
+		.then(response => {
+			if (response.status === 200) {
+				return response.json();
+			}
+		})
+		.catch(err => console.log(err))
+}
+
+export const getRoomIssueVotes = (roomUid, issueUid) => {
+	return fetch(urls.getRoomIssueVotes
+		.replace('roomUid', roomUid)
+		.replace('issueUid', issueUid), {
+			method: 'GET',
+			headers: {
+				"Authorization": localStorage.getItem('accessToken')
+			}
+		})
 		.then(response => {
 			if (response.status === 200) {
 				return response.json();

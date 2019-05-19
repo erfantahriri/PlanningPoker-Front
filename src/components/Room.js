@@ -1,5 +1,11 @@
 import React, { Component } from 'react';
-import { getRoomIssues, getRoomParticipants, createIssue } from '../services/api';
+import {
+  getRoomIssues,
+  getRoomParticipants,
+  createIssue,
+  getRoomCurrentIssue,
+  setRoomCurrentIssue
+} from '../services/api';
 import toastr from 'toastr';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -15,6 +21,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Person from '@material-ui/icons/Person';
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
+import RadioButtonUnchecked from '@material-ui/icons/RadioButtonUnchecked';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
 import CreateIssueComponent from './CreateIssue'
@@ -91,7 +98,7 @@ export class Room extends Component {
           this.setState(Object.assign(
             {},
             this.state,
-            { open: false, issues: [...this.state.issues, data] }
+            { open: false }
           ));
         } else {
           toastr.error("Something went wrong!");
@@ -109,12 +116,15 @@ export class Room extends Component {
   }
 
   issueItemOnClick = (issue) => {
-    this.setState(Object.assign(
-      {},
-      this.state,
-      { currentIssue: issue }
-    ));
-    this.ws.send(JSON.stringify({message: "Hello World!"}));
+    setRoomCurrentIssue(this.roomUid, issue.uid)
+      .then(data => {
+        if (data) {
+
+        } else {
+          toastr.error("Something went wrong!");
+        }
+      })
+      .catch(error => console.log(error));
   }
 
   componentDidMount() {
@@ -136,6 +146,20 @@ export class Room extends Component {
       })
       .catch(error => console.log(error));
 
+    getRoomCurrentIssue(this.roomUid)
+      .then(data => {
+        if (data) {
+          this.setState(Object.assign(
+            {},
+            this.state,
+            { currentIssue: data }
+          ));
+        } else {
+          toastr.error("Something went wrong!");
+        }
+      })
+      .catch(error => console.log(error));
+
     getRoomParticipants(this.roomUid)
       .then(data => {
         if (data) {
@@ -151,24 +175,52 @@ export class Room extends Component {
       })
       .catch(error => console.log(error));
 
-      this.ws.onopen = () => {
-        // on connecting, do nothing but log it to the console
-        console.log('connected')
+    this.ws.onopen = () => {
+      // on connecting, do nothing but log it to the console
+      console.log('connected')
+    }
+
+    this.ws.onmessage = evt => {
+      // on receiving a message, add it to the list of messages
+      const message = JSON.parse(evt.data);
+      switch (message.type) {
+
+        case "add_issue":
+          this.setState(Object.assign(
+            {},
+            this.state,
+            { issues: [message.content, ...this.state.issues] }
+          ));
+          break;
+
+        case "add_participant":
+          this.setState(Object.assign(
+            {},
+            this.state,
+            { participants: [message.content, ...this.state.participants] }
+          ));
+          break;
+
+        case "current_issue":
+          this.setState(Object.assign(
+            {},
+            this.state,
+            { currentIssue: message.content }
+          ));
+          break;
+
+        default:
+          break;
       }
-  
-      this.ws.onmessage = evt => {
-        // on receiving a message, add it to the list of messages
-        const message = JSON.parse(evt.data)
-        console.log(message)
-      }
-  
-      this.ws.onclose = () => {
-        console.log('disconnected')
-        // automatically try to reconnect on connection loss
-        this.setState({
-          ws: new WebSocket(BaseRoomWsUrl + this.roomUid + '/'),
-        })
-      }
+    }
+
+    this.ws.onclose = () => {
+      console.log('disconnected')
+      // automatically try to reconnect on connection loss
+      this.setState({
+        ws: new WebSocket(BaseRoomWsUrl + this.roomUid + '/'),
+      })
+    }
   }
 
   render() {
@@ -220,7 +272,9 @@ export class Room extends Component {
             {this.state.issues.map((issue, index) => (
               <ListItem button key={issue.uid}
                 onClick={this.issueItemOnClick.bind(this, issue)} >
-                <ListItemIcon><CheckCircleOutline /></ListItemIcon>
+                <ListItemIcon>
+                  { issue.is_current ? <CheckCircleOutline /> : <RadioButtonUnchecked />}
+                </ListItemIcon>
                 <ListItemText primary={issue.title} />
               </ListItem>
             ))}
