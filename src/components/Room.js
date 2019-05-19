@@ -24,8 +24,8 @@ import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
 import RadioButtonUnchecked from '@material-ui/icons/RadioButtonUnchecked';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
-import CreateIssueComponent from './CreateIssue'
-import Board from './Board'
+import CreateIssueComponent from './CreateIssue';
+import Board from './Board';
 
 const drawerWidth = 240;
 const BaseRoomWsUrl = `ws://127.0.0.1:8000/ws/rooms/`
@@ -209,6 +209,24 @@ export class Room extends Component {
           ));
           break;
 
+        case "add_vote":
+          this.setState(Object.assign(
+            {},
+            this.state,
+            {
+              currentIssue: Object.assign(
+                {},
+                this.state.currentIssue,
+                {
+                  votes: [message.content, ...this.state.currentIssue.votes.filter(
+                    v => v.participant.uid !== message.content.participant.uid
+                  )]
+                }
+              )
+            }
+          ));
+          break;
+
         default:
           break;
       }
@@ -276,7 +294,7 @@ export class Room extends Component {
               <ListItem button key={issue.uid}
                 onClick={this.issueItemOnClick.bind(this, issue)} >
                 <ListItemIcon>
-                  { issue.is_current ? <CheckCircleOutline /> : <RadioButtonUnchecked />}
+                  {issue.is_current ? <CheckCircleOutline /> : <RadioButtonUnchecked />}
                 </ListItemIcon>
                 <ListItemText primary={issue.title} />
               </ListItem>
