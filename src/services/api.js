@@ -7,6 +7,7 @@ const urls = {
 	getRoomCurrentIssue: baseUrl + "/v1/rooms/roomUid/current_issue",
 	setRoomCurrentIssue: baseUrl + "/v1/rooms/roomUid/current_issue",
 	getRoomIssueVotes: baseUrl + "/v1/rooms/roomUid/issues/issueUid/votes",
+	submitRoomIssueVote: baseUrl + "/v1/rooms/roomUid/issues/issueUid/votes",
 	getRoomParticipants: baseUrl + "/v1/rooms/roomUid/participants",
 	createIssue: baseUrl + "/v1/rooms/roomUid/issues",
 	joinRoom: baseUrl + "/v1/rooms/roomUid/join",
@@ -99,6 +100,29 @@ export const getRoomIssueVotes = (roomUid, issueUid) => {
 		.then(response => {
 			if (response.status === 200) {
 				return response.json();
+			}
+		})
+		.catch(err => console.log(err))
+}
+
+export const submitRoomIssueVote = (roomUid, issueUid, storyPoint) => {
+	return fetch(urls.submitRoomIssueVote
+		.replace('roomUid', roomUid)
+		.replace('issueUid', issueUid), {
+			method: 'POST',
+			headers: {
+				"Content-Type": "application/json",
+				"Authorization": localStorage.getItem('accessToken')
+			},
+			body: JSON.stringify({
+				estimated_points: storyPoint,
+			})
+		})
+		.then(response => {
+			if (response.status === 201 || response.status === 200) {
+				return response.json();
+			} else {
+				return Promise.reject();
 			}
 		})
 		.catch(err => console.log(err))

@@ -1,9 +1,25 @@
 import React, { Component } from 'react';
+import toastr from 'toastr';
 import StoryPointCard from './Card';
 import VoteCard from './VoteCard';
+import { submitRoomIssueVote } from '../services/api';
+import ButtonBase from '@material-ui/core/ButtonBase';
 
 export class Board extends Component {
 	storyPoints = ["0", "1/2", "1", "2", "3", "5", "8", "13", "20", "40", "100", "?"];
+
+	storyPointCardOnClick = (event) => {
+		submitRoomIssueVote(
+			this.props.roomUid,
+			this.props.currentIssue.uid,
+			event.target.innerText
+		)
+			.catch(error => {
+				console.log(error);
+				toastr.error("Something went wrong!");
+			});
+	}
+
 	render() {
 		return (
 			<div>
@@ -19,7 +35,10 @@ export class Board extends Component {
 					bottom: "20px",
 					marginRight: "250px",
 				}}>
-					{this.storyPoints.map(sp => <StoryPointCard sp={sp} />)}
+					{this.storyPoints.map(storyPoint =>
+						(<ButtonBase onClick={this.storyPointCardOnClick}>
+							<StoryPointCard storyPoint={storyPoint} />
+						</ButtonBase>))}
 				</div>
 			</div>
 		)

@@ -25,7 +25,7 @@ export class StoryPointCard extends Component {
 			}}>
 				<CardContent>
 					<Typography variant="h4" component="h2">
-						{this.props.sp}
+						{this.props.storyPoint}
 					</Typography>
 				</CardContent>
 			</Card>

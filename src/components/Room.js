@@ -255,7 +255,10 @@ export class Room extends Component {
         </Drawer>
         <main className={this.classes.content}>
           <div className={this.classes.toolbar} />
-          <Board currentIssue={this.state.currentIssue} />
+          <Board
+            currentIssue={this.state.currentIssue}
+            roomUid={this.roomUid}
+          />
         </main>
         <Drawer
           className={this.classes.drawer}
