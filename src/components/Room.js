@@ -21,6 +21,7 @@ import CreateIssueComponent from './CreateIssue'
 import Board from './Board'
 
 const drawerWidth = 240;
+const BaseRoomWsUrl = `ws://127.0.0.1:8000/ws/rooms/`
 
 const styles = theme => ({
   root: {
@@ -56,13 +57,15 @@ const styles = theme => ({
 
 export class Room extends Component {
   roomUid = undefined;
+  ws = undefined;
   classes = this.props.classes;
 
   state = {
     issues: [],
     participants: [],
     open: false,
-    issueTitle: undefined
+    issueTitle: undefined,
+    currentIssue: undefined
   }
 
   handleClickOpen = () => {
@@ -83,18 +86,18 @@ export class Room extends Component {
 
   handleCreateIssue = () => {
     createIssue(this.roomUid, this.state.issueTitle)
-    .then(data => {
-      if (data) {
-        this.setState(Object.assign(
-          {},
-          this.state,
-          { open: false, issues: [...this.state.issues, data] }
-        ));
-      } else {
-        toastr.error("Something went wrong!");
-      }
-    })
-    .catch(error => console.log(error));
+      .then(data => {
+        if (data) {
+          this.setState(Object.assign(
+            {},
+            this.state,
+            { open: false, issues: [...this.state.issues, data] }
+          ));
+        } else {
+          toastr.error("Something went wrong!");
+        }
+      })
+      .catch(error => console.log(error));
   };
 
   handleIssueTitleInputChange = (event) => {
@@ -103,10 +106,20 @@ export class Room extends Component {
       this.state,
       { issueTitle: event.target.value }
     ));
-	}
+  }
+
+  issueItemOnClick = (issue) => {
+    this.setState(Object.assign(
+      {},
+      this.state,
+      { currentIssue: issue }
+    ));
+    this.ws.send(JSON.stringify({message: "Hello World!"}));
+  }
 
   componentDidMount() {
     this.roomUid = this.props.match.params.roomUid;
+    this.ws = new WebSocket(BaseRoomWsUrl + this.roomUid + '/')
 
     getRoomIssues(this.roomUid)
       .then(data => {
@@ -137,6 +150,25 @@ export class Room extends Component {
         }
       })
       .catch(error => console.log(error));
+
+      this.ws.onopen = () => {
+        // on connecting, do nothing but log it to the console
+        console.log('connected')
+      }
+  
+      this.ws.onmessage = evt => {
+        // on receiving a message, add it to the list of messages
+        const message = JSON.parse(evt.data)
+        console.log(message)
+      }
+  
+      this.ws.onclose = () => {
+        console.log('disconnected')
+        // automatically try to reconnect on connection loss
+        this.setState({
+          ws: new WebSocket(BaseRoomWsUrl + this.roomUid + '/'),
+        })
+      }
   }
 
   render() {
@@ -171,7 +203,7 @@ export class Room extends Component {
         </Drawer>
         <main className={this.classes.content}>
           <div className={this.classes.toolbar} />
-          <Board />
+          <Board currentIssue={this.state.currentIssue} />
         </main>
         <Drawer
           className={this.classes.drawer}
@@ -186,7 +218,8 @@ export class Room extends Component {
           <Divider />
           <List>
             {this.state.issues.map((issue, index) => (
-              <ListItem button key={issue.uid}>
+              <ListItem button key={issue.uid}
+                onClick={this.issueItemOnClick.bind(this, issue)} >
                 <ListItemIcon><CheckCircleOutline /></ListItemIcon>
                 <ListItemText primary={issue.title} />
               </ListItem>
