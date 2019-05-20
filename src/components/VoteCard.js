@@ -4,7 +4,6 @@ import { withStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
-import { red } from '@material-ui/core/colors';
 
 const styles = {
 	card: {
@@ -12,7 +11,7 @@ const styles = {
 	},
 };
 
-export class StoryPointCard extends Component {
+export class VoteCard extends Component {
 	classes = this.props.classes;
 
 	render() {
@@ -24,8 +23,11 @@ export class StoryPointCard extends Component {
 				height: "50 px",
 			}}>
 				<CardContent>
+					<Typography variant="h7" component="h7">
+						{this.props.vote.participant.name}
+					</Typography>
 					<Typography variant="h4" component="h2">
-						{this.props.storyPoint}
+						{this.props.vote.estimated_points}
 					</Typography>
 				</CardContent>
 			</Card>
@@ -33,8 +35,8 @@ export class StoryPointCard extends Component {
 	}
 }
 
-StoryPointCard.propTypes = {
+VoteCard.propTypes = {
 	classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(StoryPointCard);
+export default withStyles(styles)(VoteCard);
