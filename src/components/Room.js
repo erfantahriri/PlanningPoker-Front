@@ -249,7 +249,7 @@ export class Room extends Component {
         <AppBar position="fixed" className={this.classes.appBar}>
           <Toolbar>
             <Typography variant="h6" color="inherit" noWrap className={this.classes.test}>
-              Planning Poker - Room ID to Joind other team members: {this.roomUid}
+              Planning Poker - Room ID to invite other: {this.roomUid}
           </Typography>
           </Toolbar>
         </AppBar>
