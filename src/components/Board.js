@@ -4,6 +4,7 @@ import StoryPointCard from './Card';
 import VoteCard from './VoteCard';
 import { submitRoomIssueVote } from '../services/api';
 import ButtonBase from '@material-ui/core/ButtonBase';
+import Button from '@material-ui/core/Button';
 
 export class Board extends Component {
 	storyPoints = ["0", "1/2", "1", "2", "3", "5", "8", "13", "20", "40", "100", "?"];
@@ -25,6 +26,14 @@ export class Board extends Component {
 			<div>
 				<div>
 					{this.props.currentIssue ? this.props.currentIssue.title : ""}
+						<Button
+							variant="contained"
+							color="primary"
+							style={{ float: "right" }}
+							// onClick={this.UpdateIssueOnClick}
+						>
+							Update Issue
+          </Button>
 					<div>
 						{this.props.currentIssue
 							&& this.props.currentIssue.votes.map(vote => <VoteCard vote={vote} />)}
