@@ -1,5 +1,11 @@
 import React, { Component } from 'react';
-import { getRoomIssues, getRoomParticipants, createIssue } from '../services/api';
+import {
+  getRoomIssues,
+  getRoomParticipants,
+  createIssue,
+  getRoomCurrentIssue,
+  setRoomCurrentIssue
+} from '../services/api';
 import toastr from 'toastr';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -15,10 +21,11 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Person from '@material-ui/icons/Person';
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
+import RadioButtonUnchecked from '@material-ui/icons/RadioButtonUnchecked';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
-import CreateIssueComponent from './CreateIssue'
-import Board from './Board'
+import CreateIssueComponent from './CreateIssue';
+import Board from './Board';
 
 const drawerWidth = 240;
 const BaseRoomWsUrl = `ws://127.0.0.1:8000/ws/rooms/`
@@ -91,7 +98,7 @@ export class Room extends Component {
           this.setState(Object.assign(
             {},
             this.state,
-            { open: false, issues: [...this.state.issues, data] }
+            { open: false }
           ));
         } else {
           toastr.error("Something went wrong!");
@@ -109,12 +116,15 @@ export class Room extends Component {
   }
 
   issueItemOnClick = (issue) => {
-    this.setState(Object.assign(
-      {},
-      this.state,
-      { currentIssue: issue }
-    ));
-    this.ws.send(JSON.stringify({message: "Hello World!"}));
+    setRoomCurrentIssue(this.roomUid, issue.uid)
+      .then(data => {
+        if (data) {
+
+        } else {
+          toastr.error("Something went wrong!");
+        }
+      })
+      .catch(error => console.log(error));
   }
 
   componentDidMount() {
@@ -136,6 +146,20 @@ export class Room extends Component {
       })
       .catch(error => console.log(error));
 
+    getRoomCurrentIssue(this.roomUid)
+      .then(data => {
+        if (data) {
+          this.setState(Object.assign(
+            {},
+            this.state,
+            { currentIssue: data }
+          ));
+        } else {
+          toastr.error("Something went wrong!");
+        }
+      })
+      .catch(error => console.log(error));
+
     getRoomParticipants(this.roomUid)
       .then(data => {
         if (data) {
@@ -151,37 +175,85 @@ export class Room extends Component {
       })
       .catch(error => console.log(error));
 
-      this.ws.onopen = () => {
-        // on connecting, do nothing but log it to the console
-        console.log('connected')
+    this.ws.onopen = () => {
+      // on connecting, do nothing but log it to the console
+      console.log('connected')
+    }
+
+    this.ws.onmessage = evt => {
+      // on receiving a message, add it to the list of messages
+      const message = JSON.parse(evt.data);
+      switch (message.type) {
+
+        case "add_issue":
+          this.setState(Object.assign(
+            {},
+            this.state,
+            { issues: [message.content, ...this.state.issues] }
+          ));
+          break;
+
+        case "add_participant":
+          this.setState(Object.assign(
+            {},
+            this.state,
+            { participants: [message.content, ...this.state.participants] }
+          ));
+          break;
+
+        case "current_issue":
+          this.setState(Object.assign(
+            {},
+            this.state,
+            { currentIssue: message.content }
+          ));
+          break;
+
+        case "add_vote":
+          this.setState(Object.assign(
+            {},
+            this.state,
+            {
+              currentIssue: Object.assign(
+                {},
+                this.state.currentIssue,
+                {
+                  votes: [message.content, ...this.state.currentIssue.votes.filter(
+                    v => v.participant.uid !== message.content.participant.uid
+                  )]
+                }
+              )
+            }
+          ));
+          break;
+
+        default:
+          break;
       }
-  
-      this.ws.onmessage = evt => {
-        // on receiving a message, add it to the list of messages
-        const message = JSON.parse(evt.data)
-        console.log(message)
-      }
-  
-      this.ws.onclose = () => {
-        console.log('disconnected')
-        // automatically try to reconnect on connection loss
-        this.setState({
-          ws: new WebSocket(BaseRoomWsUrl + this.roomUid + '/'),
-        })
-      }
+    }
+
+    this.ws.onclose = () => {
+      console.log('disconnected')
+      // automatically try to reconnect on connection loss
+      this.setState({
+        ws: new WebSocket(BaseRoomWsUrl + this.roomUid + '/'),
+      })
+    }
   }
 
   render() {
     return (
       <div className={this.classes.root}>
+
         <CssBaseline />
         <AppBar position="fixed" className={this.classes.appBar}>
           <Toolbar>
             <Typography variant="h6" color="inherit" noWrap className={this.classes.test}>
-              Planning Poker - ROOM NAME
+              Planning Poker - Room ID to invite other: {this.roomUid}
           </Typography>
           </Toolbar>
         </AppBar>
+
         <Drawer
           className={this.classes.drawer}
           variant="permanent"
@@ -192,6 +264,7 @@ export class Room extends Component {
           <div className={this.classes.toolbar} />
           <h3 style={{ textAlign: "center" }}>Participants</h3>
           <Divider />
+
           <List>
             {this.state.participants.map((participant, index) => (
               <ListItem button key={participant.uid}>
@@ -200,11 +273,17 @@ export class Room extends Component {
               </ListItem>
             ))}
           </List>
+
         </Drawer>
+
         <main className={this.classes.content}>
           <div className={this.classes.toolbar} />
-          <Board currentIssue={this.state.currentIssue} />
+          <Board
+            currentIssue={this.state.currentIssue}
+            roomUid={this.roomUid}
+          />
         </main>
+
         <Drawer
           className={this.classes.drawer}
           variant="permanent"
@@ -220,8 +299,14 @@ export class Room extends Component {
             {this.state.issues.map((issue, index) => (
               <ListItem button key={issue.uid}
                 onClick={this.issueItemOnClick.bind(this, issue)} >
-                <ListItemIcon><CheckCircleOutline /></ListItemIcon>
+                <ListItemIcon>
+                  {issue.is_current ? <CheckCircleOutline /> : <RadioButtonUnchecked />}
+                </ListItemIcon>
                 <ListItemText primary={issue.title} />
+                <ListItemText
+                  primary={issue.estimated_points ? issue.estimated_points : "N/A"}
+                  style={{ textAlign: "right" }}
+                />
               </ListItem>
             ))}
           </List>
@@ -233,10 +318,10 @@ export class Room extends Component {
             open={this.state.open}
             handleClose={this.handleClose}
             handleCreateIssue={this.handleCreateIssue}
-            handleCreateIssue={this.handleCreateIssue}
             handleIssueTitleInputChange={this.handleIssueTitleInputChange}
           />
         </Drawer>
+
       </div>
     )
   }
