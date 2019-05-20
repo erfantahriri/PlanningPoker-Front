@@ -244,6 +244,7 @@ export class Room extends Component {
   render() {
     return (
       <div className={this.classes.root}>
+
         <CssBaseline />
         <AppBar position="fixed" className={this.classes.appBar}>
           <Toolbar>
@@ -252,6 +253,7 @@ export class Room extends Component {
           </Typography>
           </Toolbar>
         </AppBar>
+
         <Drawer
           className={this.classes.drawer}
           variant="permanent"
@@ -262,6 +264,7 @@ export class Room extends Component {
           <div className={this.classes.toolbar} />
           <h3 style={{ textAlign: "center" }}>Participants</h3>
           <Divider />
+
           <List>
             {this.state.participants.map((participant, index) => (
               <ListItem button key={participant.uid}>
@@ -270,7 +273,9 @@ export class Room extends Component {
               </ListItem>
             ))}
           </List>
+
         </Drawer>
+
         <main className={this.classes.content}>
           <div className={this.classes.toolbar} />
           <Board
@@ -278,6 +283,7 @@ export class Room extends Component {
             roomUid={this.roomUid}
           />
         </main>
+
         <Drawer
           className={this.classes.drawer}
           variant="permanent"
@@ -297,6 +303,10 @@ export class Room extends Component {
                   {issue.is_current ? <CheckCircleOutline /> : <RadioButtonUnchecked />}
                 </ListItemIcon>
                 <ListItemText primary={issue.title} />
+                <ListItemText
+                  primary={issue.estimated_points ? issue.estimated_points : "N/A"}
+                  style={{ textAlign: "right" }}
+                />
               </ListItem>
             ))}
           </List>
@@ -308,10 +318,10 @@ export class Room extends Component {
             open={this.state.open}
             handleClose={this.handleClose}
             handleCreateIssue={this.handleCreateIssue}
-            handleCreateIssue={this.handleCreateIssue}
             handleIssueTitleInputChange={this.handleIssueTitleInputChange}
           />
         </Drawer>
+
       </div>
     )
   }
