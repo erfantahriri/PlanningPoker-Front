@@ -1,3 +1,5 @@
+import toastr from 'toastr';
+
 const baseUrl = "http://127.0.0.1:8000"
 
 const urls = {
@@ -180,6 +182,15 @@ export const updateIssue = (roomUid, issueUid, title, estimatedPoints) => {
 		.then(response => {
 			if (response.status === 200) {
 				return response.json();
+			} else {
+				response.json()
+					.then(data => {
+						for (let field in data) {
+							for (let message of data[field]) {
+								toastr.error(message);
+							}
+						}
+					})
 			}
 		})
 		.catch(err => console.log(err))

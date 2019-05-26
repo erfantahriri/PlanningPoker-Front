@@ -57,8 +57,6 @@ export class Board extends Component {
 						this.state,
 						{ updateIssueDialogOpen: false }
 					));
-				} else {
-					toastr.error("Something went wrong!");
 				}
 			})
 			.catch(error => console.log(error));
