@@ -12,7 +12,8 @@ export class Board extends Component {
 
 	state = {
 		updateIssueDialogOpen: false,
-		currentIssueEstimatedPoints: undefined
+		currentIssueEstimatedPoints: undefined,
+		showVotes: false
 	}
 
 	storyPointCardOnClick = (event) => {
@@ -32,6 +33,14 @@ export class Board extends Component {
 			{},
 			this.state,
 			{ updateIssueDialogOpen: true }
+		));
+	};
+
+	handleClickFlipCard = () => {
+		this.setState(Object.assign(
+			{},
+			this.state,
+			{ showVotes: !this.state.showVotes }
 		));
 	};
 
@@ -74,15 +83,31 @@ export class Board extends Component {
 		return (
 			<div>
 				<div>
-					{this.props.currentIssue ? this.props.currentIssue.title : ""}
-					<Button
-						variant="contained"
-						color="primary"
-						style={{ float: "right" }}
-						onClick={this.handleClickOpenUpdateIssueDialog}
-					>
-						Update Issue
+					<div>
+						<Button
+							variant="contained"
+							color="primary"
+							style={{ float: "right" }}
+							onClick={this.handleClickOpenUpdateIssueDialog}
+						>
+							Update Issue
           </Button>
+						<Button
+							variant="contained"
+							color="secondary"
+							onClick={this.handleClickFlipCard}
+						>
+							Flip Cards
+          </Button>
+					</div>
+					<div style={{
+						margin: "30px 0 10px 0",
+						fontSize: "20px",
+						fontWeight: "bold",
+						textDecoration: "underline"
+					}}>
+						{this.props.currentIssue ? this.props.currentIssue.title : ""}
+					</div>
 					<UpdateIssueComponent
 						updateIssueDialogOpen={this.state.updateIssueDialogOpen}
 						handleUpdateIssueDialogClose={this.handleUpdateIssueDialogClose}
@@ -91,7 +116,8 @@ export class Board extends Component {
 					/>
 					<div>
 						{this.props.currentIssue
-							&& this.props.currentIssue.votes.map(vote => <VoteCard vote={vote} />)}
+							&& this.props.currentIssue.votes.map(vote =>
+								<VoteCard vote={vote} showVotes={this.state.showVotes} />)}
 					</div>
 				</div>
 				<div style={{
