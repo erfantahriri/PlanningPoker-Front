@@ -193,6 +193,18 @@ export class Room extends Component {
           ));
           break;
 
+        case "update_issue":
+          this.setState(Object.assign(
+            {},
+            this.state,
+            {
+              issues: this.state.issues.map(issue => {
+                return issue.uid !== message.content.uid ? issue : message.content
+              })
+            }
+          ));
+          break;
+
         case "add_participant":
           this.setState(Object.assign(
             {},
@@ -250,7 +262,7 @@ export class Room extends Component {
           <Toolbar>
             <Typography variant="h6" color="inherit" noWrap className={this.classes.test}>
               Planning Poker - Room ID to invite other: {this.roomUid}
-          </Typography>
+            </Typography>
           </Toolbar>
         </AppBar>
 

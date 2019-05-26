@@ -55,7 +55,7 @@ export class Board extends Component {
 					this.setState(Object.assign(
 						{},
 						this.state,
-						{ open: false }
+						{ updateIssueDialogOpen: false }
 					));
 				} else {
 					toastr.error("Something went wrong!");
