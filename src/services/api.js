@@ -1,3 +1,5 @@
+import toastr from 'toastr';
+
 const baseUrl = "http://127.0.0.1:8000"
 
 const urls = {
@@ -10,6 +12,7 @@ const urls = {
 	submitRoomIssueVote: baseUrl + "/v1/rooms/roomUid/issues/issueUid/votes",
 	getRoomParticipants: baseUrl + "/v1/rooms/roomUid/participants",
 	createIssue: baseUrl + "/v1/rooms/roomUid/issues",
+	updateIssue: baseUrl + "/v1/rooms/roomUid/issues/issueUid",
 	joinRoom: baseUrl + "/v1/rooms/roomUid/join",
 }
 
@@ -157,6 +160,37 @@ export const createIssue = (roomUid, title) => {
 		.then(response => {
 			if (response.status === 201) {
 				return response.json();
+			}
+		})
+		.catch(err => console.log(err))
+}
+
+export const updateIssue = (roomUid, issueUid, title, estimatedPoints) => {
+	return fetch(urls.updateIssue
+		.replace('roomUid', roomUid)
+		.replace('issueUid', issueUid), {
+			method: 'PUT',
+			headers: {
+				"Content-Type": "application/json",
+				"Authorization": localStorage.getItem('accessToken')
+			},
+			body: JSON.stringify({
+				estimated_points: estimatedPoints,
+				title: title
+			})
+		})
+		.then(response => {
+			if (response.status === 200) {
+				return response.json();
+			} else {
+				response.json()
+					.then(data => {
+						for (let field in data) {
+							for (let message of data[field]) {
+								toastr.error(message);
+							}
+						}
+					})
 			}
 		})
 		.catch(err => console.log(err))

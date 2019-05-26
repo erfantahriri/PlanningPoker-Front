@@ -6,15 +6,15 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
-export default class CreateIssue extends React.Component {
+export default class UpdateIssue extends React.Component {
 	render() {
 		return (
 			<div>
 				<Dialog
-					open={this.props.open}
+					open={this.props.updateIssueDialogOpen}
 					aria-labelledby="form-dialog-title"
 				>
-					<DialogTitle id="form-dialog-title">Create Issue</DialogTitle>
+					<DialogTitle id="form-dialog-title">Update Issue</DialogTitle>
 					<DialogContent>
 						{/* <DialogContentText>
 							Create an issue.
@@ -22,19 +22,19 @@ export default class CreateIssue extends React.Component {
 						<TextField
 							autoFocus
 							margin="dense"
-							id="issueTitle"
-							label="Issue Title"
+							id="issueEstimatedPoints"
+							label="Issue Estimated Points"
 							type="text"
 							fullWidth
-							onChange={this.props.handleIssueTitleInputChange}
+							onChange={this.props.handleEstimatedPointsChange}
 						/>
 					</DialogContent>
 					<DialogActions>
-						<Button onClick={this.props.handleClose} color="primary">
+						<Button onClick={this.props.handleUpdateIssueDialogClose} color="primary">
 							Cancel
             </Button>
-						<Button onClick={this.props.handleCreateIssue} color="primary">
-							Create
+						<Button onClick={this.props.handleUpdateIssue} color="primary">
+							Update
             </Button>
 					</DialogActions>
 				</Dialog>
