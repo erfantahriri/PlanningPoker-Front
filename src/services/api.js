@@ -13,6 +13,7 @@ const urls = {
 	getRoomParticipants: baseUrl + "/v1/rooms/roomUid/participants",
 	createIssue: baseUrl + "/v1/rooms/roomUid/issues",
 	updateIssue: baseUrl + "/v1/rooms/roomUid/issues/issueUid",
+	flipIssueVoteCards: baseUrl + "/v1/rooms/roomUid/issues/issueUid/votes/flip",
 	joinRoom: baseUrl + "/v1/rooms/roomUid/join",
 }
 
@@ -191,6 +192,24 @@ export const updateIssue = (roomUid, issueUid, title, estimatedPoints) => {
 							}
 						}
 					})
+			}
+		})
+		.catch(err => console.log(err))
+}
+
+export const flipIssueVoteCards = (roomUid, issueUid) => {
+	return fetch(urls.flipIssueVoteCards
+		.replace('roomUid', roomUid)
+		.replace('issueUid', issueUid), {
+			method: 'POST',
+			headers: {
+				"Content-Type": "application/json",
+				"Authorization": localStorage.getItem('accessToken')
+			}
+		})
+		.then(response => {
+			if (response.status === 200) {
+				return response.json();
 			}
 		})
 		.catch(err => console.log(err))

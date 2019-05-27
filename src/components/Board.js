@@ -2,7 +2,10 @@ import React, { Component } from 'react';
 import toastr from 'toastr';
 import StoryPointCard from './Card';
 import VoteCard from './VoteCard';
-import { submitRoomIssueVote, updateIssue } from '../services/api';
+import {
+	submitRoomIssueVote,
+	updateIssue, flipIssueVoteCards
+} from '../services/api';
 import ButtonBase from '@material-ui/core/ButtonBase';
 import Button from '@material-ui/core/Button';
 import UpdateIssueComponent from './UpdateIssue';
@@ -12,8 +15,7 @@ export class Board extends Component {
 
 	state = {
 		updateIssueDialogOpen: false,
-		currentIssueEstimatedPoints: undefined,
-		showVotes: false
+		currentIssueEstimatedPoints: undefined
 	}
 
 	storyPointCardOnClick = (event) => {
@@ -37,11 +39,18 @@ export class Board extends Component {
 	};
 
 	handleClickFlipCard = () => {
-		this.setState(Object.assign(
-			{},
-			this.state,
-			{ showVotes: !this.state.showVotes }
-		));
+		flipIssueVoteCards(
+			this.props.roomUid,
+			this.props.currentIssue.uid,
+		)
+			.then(data => {
+				if (data) {
+
+				} else {
+					toastr.error("Something went wrong!");
+				}
+			})
+			.catch(error => console.log(error));
 	};
 
 	handleUpdateIssueDialogClose = () => {
@@ -115,9 +124,12 @@ export class Board extends Component {
 						handleEstimatedPointsChange={this.handleEstimatedPointsChange}
 					/>
 					<div>
-						{this.props.currentIssue
-							&& this.props.currentIssue.votes.map(vote =>
-								<VoteCard vote={vote} showVotes={this.state.showVotes} />)}
+						{this.props.currentIssue && this.props.currentIssue.votes.map(
+							vote => <VoteCard
+								vote={vote}
+								vote_cards_status={this.props.currentIssue.vote_cards_status}
+							/>
+						)}
 					</div>
 				</div>
 				<div style={{

@@ -198,6 +198,8 @@ export class Room extends Component {
             {},
             this.state,
             {
+              currentIssue: this.state.currentIssue.uid !== message.content.uid ?
+                this.state.currentIssue : message.content,
               issues: this.state.issues.map(issue => {
                 return issue.uid !== message.content.uid ? issue : message.content
               })

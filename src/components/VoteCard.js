@@ -27,7 +27,8 @@ export class VoteCard extends Component {
 						{this.props.vote.participant.name}
 					</Typography>
 					<Typography variant="h4" component="h2">
-						{ this.props.showVotes ? this.props.vote.estimated_points : "***"}
+						{this.props.vote_cards_status === "visible" ?
+							this.props.vote.estimated_points : "***"}
 					</Typography>
 				</CardContent>
 			</Card>
