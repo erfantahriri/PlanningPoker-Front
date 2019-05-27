@@ -198,6 +198,8 @@ export class Room extends Component {
             {},
             this.state,
             {
+              currentIssue: this.state.currentIssue.uid !== message.content.uid ?
+                this.state.currentIssue : message.content,
               issues: this.state.issues.map(issue => {
                 return issue.uid !== message.content.uid ? issue : message.content
               })
@@ -217,7 +219,13 @@ export class Room extends Component {
           this.setState(Object.assign(
             {},
             this.state,
-            { currentIssue: message.content }
+            {
+              currentIssue: message.content,
+              issues: this.state.issues.map(issue => {
+                issue.is_current = false;
+                return issue.uid !== message.content.uid ? issue : message.content
+              })
+            }
           ));
           break;
 
