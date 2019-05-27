@@ -11,14 +11,11 @@ export default class CreateIssue extends React.Component {
 		return (
 			<div>
 				<Dialog
-					open={this.props.open}
+					open={this.props.createIssueDialogOpen}
 					aria-labelledby="form-dialog-title"
 				>
 					<DialogTitle id="form-dialog-title">Create Issue</DialogTitle>
 					<DialogContent>
-						{/* <DialogContentText>
-							Create an issue.
-            </DialogContentText> */}
 						<TextField
 							autoFocus
 							margin="dense"

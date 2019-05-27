@@ -4,7 +4,9 @@ import StoryPointCard from './Card';
 import VoteCard from './VoteCard';
 import {
 	submitRoomIssueVote,
-	updateIssue, flipIssueVoteCards
+	updateIssue,
+	flipIssueVoteCards,
+	removeIssueVotes
 } from '../services/api';
 import ButtonBase from '@material-ui/core/ButtonBase';
 import Button from '@material-ui/core/Button';
@@ -44,9 +46,20 @@ export class Board extends Component {
 			this.props.currentIssue.uid,
 		)
 			.then(data => {
-				if (data) {
+				if (!data) {
+					toastr.error("Something went wrong!");
+				}
+			})
+			.catch(error => console.log(error));
+	};
 
-				} else {
+	handleClickResetBoard = () => {
+		removeIssueVotes(
+			this.props.roomUid,
+			this.props.currentIssue.uid,
+		)
+			.then(data => {
+				if (!data) {
 					toastr.error("Something went wrong!");
 				}
 			})
@@ -107,6 +120,14 @@ export class Board extends Component {
 							onClick={this.handleClickFlipCard}
 						>
 							Flip Cards
+          </Button>
+						<Button
+							variant="contained"
+							color="default"
+							style={{ marginLeft: "10px" }}
+							onClick={this.handleClickResetBoard}
+						>
+							Reset Board
           </Button>
 					</div>
 					<div style={{

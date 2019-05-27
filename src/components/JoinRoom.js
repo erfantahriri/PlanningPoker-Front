@@ -45,7 +45,6 @@ const styles = theme => ({
 });
 
 export class JoinRoom extends Component {
-  classes = this.props.classes;
 
   state = {
     roomUid: "",
@@ -53,7 +52,7 @@ export class JoinRoom extends Component {
   }
   
   joinRoomOnClick = (event) => {
-    event.preventDefault();
+    event.preventDefault(); 
     joinRoom(
       this.state.roomUid,
       this.state.participantName
@@ -61,8 +60,7 @@ export class JoinRoom extends Component {
       .then(data => {
         if (data) {
           localStorage.setItem("accessToken", data.access_token);
-          sessionStorage.setItem("participantName", data.name);
-          sessionStorage.setItem("participantUid", data.uid);
+          localStorage.setItem("userUid", data.uid);
           this.props.history.push("/rooms/" + this.state.roomUid);
         } else {
           toastr.error("Something went wrong!");
@@ -77,13 +75,13 @@ export class JoinRoom extends Component {
 
   render() {
     return (
-      <main className={this.classes.main}>
+      <main className={this.props.classes.main}>
         <CssBaseline />
-        <Paper className={this.classes.paper}>
+        <Paper className={this.props.classes.paper}>
           <Typography component="h1" variant="h5">
             Join An Existing Room
         </Typography>
-          <form className={this.classes.form}>
+          <form className={this.props.classes.form}>
             <FormControl margin="normal" required fullWidth>
               <InputLabel htmlFor="title">Room ID</InputLabel>
               <Input id="roomUid" name="roomUid" autoFocus
@@ -101,7 +99,7 @@ export class JoinRoom extends Component {
               fullWidth
               variant="contained"
               color="primary"
-              className={this.classes.submit}
+              className={this.props.classes.submit}
 							onClick={this.joinRoomOnClick}
             >
               Join

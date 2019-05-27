@@ -12,21 +12,24 @@ const styles = {
 };
 
 export class VoteCard extends Component {
-	classes = this.props.classes;
-
 	render() {
 		return (
-			<Card className={this.classes.card} style={{
+			<Card className={this.props.classes.card} style={{
 				margin: "7px",
 				display: "inline-block",
 				width: "50 px",
 				height: "50 px",
 			}}>
 				<CardContent>
-					<Typography variant="h7" component="h7">
+					<Typography variant="h7" component="h7" style={{
+						textAlign: "center"
+					}}>
 						{this.props.vote.participant.name}
 					</Typography>
-					<Typography variant="h4" component="h2">
+					<Typography variant="h4" component="h2" style={{
+						textAlign: "center",
+						marginTop: "10px"
+					}}>
 						{this.props.vote_cards_status === "visible" ?
 							this.props.vote.estimated_points : "***"}
 					</Typography>

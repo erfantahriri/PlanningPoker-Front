@@ -65,12 +65,11 @@ const styles = theme => ({
 export class Room extends Component {
   roomUid = undefined;
   ws = undefined;
-  classes = this.props.classes;
 
   state = {
     issues: [],
     participants: [],
-    open: false,
+    createIssueDialogOpen: false,
     issueTitle: undefined,
     currentIssue: undefined
   }
@@ -79,7 +78,7 @@ export class Room extends Component {
     this.setState(Object.assign(
       {},
       this.state,
-      { open: true }
+      { createIssueDialogOpen: true }
     ));
   };
 
@@ -87,7 +86,7 @@ export class Room extends Component {
     this.setState(Object.assign(
       {},
       this.state,
-      { open: false }
+      { createIssueDialogOpen: false }
     ));
   };
 
@@ -98,7 +97,7 @@ export class Room extends Component {
           this.setState(Object.assign(
             {},
             this.state,
-            { open: false }
+            { createIssueDialogOpen: false }
           ));
         } else {
           toastr.error("Something went wrong!");
@@ -118,9 +117,7 @@ export class Room extends Component {
   issueItemOnClick = (issue) => {
     setRoomCurrentIssue(this.roomUid, issue.uid)
       .then(data => {
-        if (data) {
-
-        } else {
+        if (!data) {
           toastr.error("Something went wrong!");
         }
       })
@@ -154,8 +151,6 @@ export class Room extends Component {
             this.state,
             { currentIssue: data }
           ));
-        } else {
-          toastr.error("Something went wrong!");
         }
       })
       .catch(error => console.log(error));
@@ -263,41 +258,39 @@ export class Room extends Component {
 
   render() {
     return (
-      <div className={this.classes.root}>
+      <div className={this.props.classes.root}>
 
         <CssBaseline />
-        <AppBar position="fixed" className={this.classes.appBar}>
+        <AppBar position="fixed" className={this.props.classes.appBar}>
           <Toolbar>
-            <Typography variant="h6" color="inherit" noWrap className={this.classes.test}>
+            <Typography variant="h6" color="inherit" noWrap className={this.props.classes.test}>
               Planning Poker - Room ID to invite other: {this.roomUid}
             </Typography>
           </Toolbar>
         </AppBar>
 
         <Drawer
-          className={this.classes.drawer}
+          className={this.props.classes.drawer}
           variant="permanent"
           classes={{
-            paper: this.classes.drawerPaper,
+            paper: this.props.classes.drawerPaper,
           }}
         >
-          <div className={this.classes.toolbar} />
+          <div className={this.props.classes.toolbar} />
           <h3 style={{ textAlign: "center" }}>Participants</h3>
           <Divider />
-
           <List>
-            {this.state.participants.map((participant, index) => (
+            {this.state.participants.map((participant) => (
               <ListItem button key={participant.uid}>
                 <ListItemIcon><Person /></ListItemIcon>
                 <ListItemText primary={participant.name} />
               </ListItem>
             ))}
           </List>
-
         </Drawer>
 
-        <main className={this.classes.content}>
-          <div className={this.classes.toolbar} />
+        <main className={this.props.classes.content}>
+          <div className={this.props.classes.toolbar} />
           <Board
             currentIssue={this.state.currentIssue}
             roomUid={this.roomUid}
@@ -305,14 +298,14 @@ export class Room extends Component {
         </main>
 
         <Drawer
-          className={this.classes.drawer}
+          className={this.props.classes.drawer}
           variant="permanent"
           classes={{
-            paper: this.classes.drawerPaper,
+            paper: this.props.classes.drawerPaper,
           }}
           anchor="right"
         >
-          <div className={this.classes.toolbar} />
+          <div className={this.props.classes.toolbar} />
           <h3 style={{ textAlign: "center" }}>Issues</h3>
           <Divider />
           <List>
@@ -330,12 +323,12 @@ export class Room extends Component {
               </ListItem>
             ))}
           </List>
-          <Fab color="primary" aria-label="Add" className={this.classes.fab}
+          <Fab color="primary" aria-label="Add" className={this.props.classes.fab}
             onClick={this.handleClickOpen}>
             <AddIcon />
           </Fab>
           <CreateIssueComponent
-            open={this.state.open}
+            createIssueDialogOpen={this.state.createIssueDialogOpen}
             handleClose={this.handleClose}
             handleCreateIssue={this.handleCreateIssue}
             handleIssueTitleInputChange={this.handleIssueTitleInputChange}
