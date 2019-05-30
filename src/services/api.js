@@ -69,7 +69,7 @@ export const getRoomCurrentIssue = (roomUid) => {
 		.then(response => {
 			if (response.status === 200) {
 				return response.json();
-			}
+			} 
 		})
 		.catch(err => console.log(err))
 }

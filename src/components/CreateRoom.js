@@ -47,7 +47,6 @@ const styles = theme => ({
 
 
 export class CreateRoom extends Component {
-	classes = this.props.classes;
 
 	state = {
 		title: "",
@@ -65,11 +64,7 @@ export class CreateRoom extends Component {
 			.then(data => {
 				if (data) {
 					localStorage.setItem("accessToken", data.creator.access_token);
-					sessionStorage.setItem("roomUid", data.uid);
-					sessionStorage.setItem("roomTitle", data.title);
-					sessionStorage.setItem("roomDescription", data.description);
-					sessionStorage.setItem("participantName", data.creator.name);
-					sessionStorage.setItem("participantUid", data.creator.uid);
+					localStorage.setItem("userUid", data.creator.uid);
 					this.props.history.push("/rooms/" + data.uid);
 				} else {
 					toastr.error("Something went wrong!");
@@ -84,13 +79,13 @@ export class CreateRoom extends Component {
 
 	render() {
 		return (
-			<main className={this.classes.main} >
+			<main className={this.props.classes.main} >
 				<CssBaseline />
-				<Paper className={this.classes.paper}>
+				<Paper className={this.props.classes.paper}>
 					<Typography component="h1" variant="h5">
 						Create A New Room
 					</Typography>
-					<form className={this.classes.form}>
+					<form className={this.props.classes.form}>
 						<FormControl margin="normal" required fullWidth>
 							<InputLabel htmlFor="title">Room Title</InputLabel>
 							<Input id="title" name="title"
@@ -114,7 +109,7 @@ export class CreateRoom extends Component {
 							fullWidth
 							variant="contained"
 							color="secondary"
-							className={this.classes.submit}
+							className={this.props.classes.submit}
 							onClick={this.createRoomOnClick}
 						>
 							Create

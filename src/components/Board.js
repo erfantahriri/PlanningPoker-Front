@@ -46,9 +46,7 @@ export class Board extends Component {
 			this.props.currentIssue.uid,
 		)
 			.then(data => {
-				if (data) {
-
-				} else {
+				if (!data) {
 					toastr.error("Something went wrong!");
 				}
 			})
@@ -61,9 +59,7 @@ export class Board extends Component {
 			this.props.currentIssue.uid,
 		)
 			.then(data => {
-				if (data) {
-
-				} else {
+				if (!data) {
 					toastr.error("Something went wrong!");
 				}
 			})
@@ -103,6 +99,20 @@ export class Board extends Component {
 			this.state,
 			{ currentIssueEstimatedPoints: event.target.value }
 		));
+	}
+
+	isMyVote(storyPoint) {
+		if (!this.props.currentIssue) {
+			return false;
+		}
+		let myVote = this.props.currentIssue.votes.filter(
+			vote => vote.participant.uid === localStorage.getItem('userUid')
+		)
+		if (myVote.length > 0) {
+			return storyPoint === myVote[0].estimated_points;
+		} else {
+			return false;
+		}
 	}
 
 	render() {
@@ -164,7 +174,10 @@ export class Board extends Component {
 				}}>
 					{this.storyPoints.map(storyPoint =>
 						(<ButtonBase onClick={this.storyPointCardOnClick}>
-							<StoryPointCard storyPoint={storyPoint} />
+							<StoryPointCard
+								storyPoint={storyPoint}
+								isMyVote={this.isMyVote(storyPoint)}
+							/>
 						</ButtonBase>))}
 				</div>
 			</div>
