@@ -52,7 +52,7 @@ const styles = theme => ({
     padding: theme.spacing.unit * 3,
   },
   fab: {
-    position: 'absolute',
+    position: 'fixed',
     bottom: theme.spacing.unit * 2,
     right: theme.spacing.unit * 2,
   },
@@ -282,10 +282,16 @@ export class Room extends Component {
           <List>
             {this.state.participants.map((participant) => (
               <ListItem button key={participant.uid}>
-                <ListItemIcon><Person /></ListItemIcon>
-                <ListItemText primary={participant.name} />
+                <ListItemIcon style={
+                  localStorage.getItem('userUid') === participant.uid ?
+                    { "color": "#3f51b5" } : { "color": "gray" }
+                }><Person /></ListItemIcon>
+                <ListItemText primary={
+                  localStorage.getItem('userUid') === participant.uid ?
+                    participant.name + " (you)" : participant.name
+                } />
               </ListItem>
-            ))}
+            ))} 
           </List>
         </Drawer>
 
