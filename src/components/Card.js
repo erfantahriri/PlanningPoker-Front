@@ -12,18 +12,28 @@ const styles = {
 };
 
 export class StoryPointCard extends Component {
-	classes = this.props.classes;
+
+	getStyle() {
+		let cardStyle = {
+			margin: "7px",
+			display: "inline-block",
+			width: "50 px",
+			height: "50 px",
+			marginBottom: "7px",
+			transition: "0.3s"
+		}
+		if (this.props.isMyVote) {
+			cardStyle.backgroundColor = "#e0e0e0";
+			cardStyle.transform = "translateY(-10px)";
+		}
+		return cardStyle;
+	}
 
 	render() {
 		return (
-			<Card className={this.classes.card} style={{
-				margin: "7px",
-				display: "inline-block",
-				width: "50 px",
-				height: "50 px",
-			}}>
+			<Card className={this.props.classes.card} style={this.getStyle()}>
 				<CardContent>
-					<Typography variant="h4" component="h2">
+					<Typography variant="h5" component="h2">
 						{this.props.storyPoint}
 					</Typography>
 				</CardContent>
