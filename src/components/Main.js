@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 import CreateRoom from './CreateRoom';
 import JoinRoom from './JoinRoom';
 import '../App.css';

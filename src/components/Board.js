@@ -8,8 +8,8 @@ import {
 	flipIssueVoteCards,
 	removeIssueVotes
 } from '../services/api';
-import ButtonBase from '@material-ui/core/ButtonBase';
-import Button from '@material-ui/core/Button';
+import ButtonBase from '@mui/material/ButtonBase';
+import Button from '@mui/material/Button';
 import UpdateIssueComponent from './UpdateIssue';
 
 export class Board extends Component {
