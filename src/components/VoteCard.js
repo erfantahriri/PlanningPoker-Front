@@ -21,7 +21,7 @@ export class VoteCard extends Component {
 				height: "50 px",
 			}}>
 				<CardContent>
-					<Typography variant="h7" component="h7" style={{
+					<Typography variant="subtitle1" component="p" style={{
 						textAlign: "center"
 					}}>
 						{this.props.vote.participant.name}

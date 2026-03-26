@@ -75,30 +75,18 @@ export class Room extends Component {
   }
 
   handleClickOpen = () => {
-    this.setState(Object.assign(
-      {},
-      this.state,
-      { createIssueDialogOpen: true }
-    ));
+    this.setState({ createIssueDialogOpen: true });
   };
 
   handleClose = () => {
-    this.setState(Object.assign(
-      {},
-      this.state,
-      { createIssueDialogOpen: false }
-    ));
+    this.setState({ createIssueDialogOpen: false });
   };
 
   handleCreateIssue = () => {
     createIssue(this.roomUid, this.state.issueTitle)
       .then(data => {
         if (data) {
-          this.setState(Object.assign(
-            {},
-            this.state,
-            { createIssueDialogOpen: false }
-          ));
+          this.setState({ createIssueDialogOpen: false });
         } else {
           toastr.error("Something went wrong!");
         }
@@ -131,12 +119,7 @@ export class Room extends Component {
     getRoomIssues(this.roomUid)
       .then(data => {
         if (data) {
-          this.setState({
-            ...this.state,
-            ...{
-              issues: data
-            }
-          });
+          this.setState({ issues: data });
         } else {
           toastr.error("Something went wrong!");
         }
@@ -146,11 +129,7 @@ export class Room extends Component {
     getRoomCurrentIssue(this.roomUid)
       .then(data => {
         if (data) {
-          this.setState(Object.assign(
-            {},
-            this.state,
-            { currentIssue: data }
-          ));
+          this.setState({ currentIssue: data });
         }
       })
       .catch(error => console.log(error));
@@ -158,12 +137,7 @@ export class Room extends Component {
     getRoomParticipants(this.roomUid)
       .then(data => {
         if (data) {
-          this.setState({
-            ...this.state,
-            ...{
-              participants: data
-            }
-          });
+          this.setState({ participants: data });
         } else {
           toastr.error("Something went wrong!");
         }
@@ -181,65 +155,42 @@ export class Room extends Component {
       switch (message.type) {
 
         case "add_issue":
-          this.setState(Object.assign(
-            {},
-            this.state,
-            { issues: [message.content, ...this.state.issues] }
-          ));
+          this.setState({ issues: [message.content, ...this.state.issues] });
           break;
 
         case "update_issue":
-          this.setState(Object.assign(
-            {},
-            this.state,
-            {
-              currentIssue: this.state.currentIssue.uid !== message.content.uid ?
-                this.state.currentIssue : message.content,
-              issues: this.state.issues.map(issue => {
-                return issue.uid !== message.content.uid ? issue : message.content
-              })
-            }
-          ));
+          this.setState({
+            currentIssue: this.state.currentIssue.uid !== message.content.uid ?
+              this.state.currentIssue : message.content,
+            issues: this.state.issues.map(issue =>
+              issue.uid !== message.content.uid ? issue : message.content
+            )
+          });
           break;
 
         case "add_participant":
-          this.setState(Object.assign(
-            {},
-            this.state,
-            { participants: [message.content, ...this.state.participants] }
-          ));
+          this.setState({ participants: [message.content, ...this.state.participants] });
           break;
 
         case "current_issue":
-          this.setState(Object.assign(
-            {},
-            this.state,
-            {
-              currentIssue: message.content,
-              issues: this.state.issues.map(issue => {
-                issue.is_current = false;
-                return issue.uid !== message.content.uid ? issue : message.content
-              })
-            }
-          ));
+          this.setState({
+            currentIssue: message.content,
+            issues: this.state.issues.map(issue => {
+              issue.is_current = false;
+              return issue.uid !== message.content.uid ? issue : message.content;
+            })
+          });
           break;
 
         case "add_vote":
-          this.setState(Object.assign(
-            {},
-            this.state,
-            {
-              currentIssue: Object.assign(
-                {},
-                this.state.currentIssue,
-                {
-                  votes: [message.content, ...this.state.currentIssue.votes.filter(
-                    v => v.participant.uid !== message.content.participant.uid
-                  )]
-                }
-              )
+          this.setState({
+            currentIssue: {
+              ...this.state.currentIssue,
+              votes: [message.content, ...this.state.currentIssue.votes.filter(
+                v => v.participant.uid !== message.content.participant.uid
+              )]
             }
-          ));
+          });
           break;
 
         default:
@@ -249,10 +200,7 @@ export class Room extends Component {
 
     this.ws.onclose = () => {
       console.log('disconnected')
-      // automatically try to reconnect on connection loss
-      this.setState({
-        ws: new WebSocket(BaseRoomWsUrl + this.roomUid + '/'),
-      })
+      this.ws = new WebSocket(BaseRoomWsUrl + this.roomUid + '/');
     }
   }
 

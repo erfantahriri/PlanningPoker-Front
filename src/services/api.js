@@ -3,7 +3,6 @@ import toastr from 'toastr';
 const baseUrl = "http://127.0.0.1:8000"
 
 const urls = {
-	getRoom: baseUrl + "/v1/rooms/",
 	createRoom: baseUrl + "/v1/rooms/",
 	getRoomIssues: baseUrl + "/v1/rooms/roomUid/issues",
 	getRoomCurrentIssue: baseUrl + "/v1/rooms/roomUid/current_issue",
@@ -18,10 +17,14 @@ const urls = {
 	joinRoom: baseUrl + "/v1/rooms/roomUid/join",
 }
 
-export const getRooms = () => {
-	return fetch(urls.getRoom)
-		.then(response => response.json())
-		.then(json => console.log(json))
+const handleAuthError = (response) => {
+	if (response.status === 401 || response.status === 403) {
+		localStorage.removeItem('accessToken');
+		localStorage.removeItem('userUid');
+		window.location.href = '/';
+		return true;
+	}
+	return false;
 }
 
 export const createRoom = (title, description, creator_name) => {
@@ -52,6 +55,7 @@ export const getRoomIssues = (roomUid) => {
 		}
 	})
 		.then(response => {
+			if (handleAuthError(response)) return;
 			if (response.status === 200) {
 				return response.json();
 			}
@@ -67,9 +71,10 @@ export const getRoomCurrentIssue = (roomUid) => {
 		}
 	})
 		.then(response => {
+			if (handleAuthError(response)) return;
 			if (response.status === 200) {
 				return response.json();
-			} 
+			}
 		})
 		.catch(err => console.log(err))
 }
@@ -86,6 +91,7 @@ export const setRoomCurrentIssue = (roomUid, issueUid) => {
 		})
 	})
 		.then(response => {
+			if (handleAuthError(response)) return;
 			if (response.status === 200) {
 				return response.json();
 			}
@@ -103,6 +109,7 @@ export const getRoomIssueVotes = (roomUid, issueUid) => {
 			}
 		})
 		.then(response => {
+			if (handleAuthError(response)) return;
 			if (response.status === 200) {
 				return response.json();
 			}
@@ -124,6 +131,7 @@ export const submitRoomIssueVote = (roomUid, issueUid, storyPoint) => {
 			})
 		})
 		.then(response => {
+			if (handleAuthError(response)) return;
 			if (response.status === 201 || response.status === 200) {
 				return response.json();
 			} else {
@@ -141,6 +149,7 @@ export const getRoomParticipants = (roomUid) => {
 		}
 	})
 		.then(response => {
+			if (handleAuthError(response)) return;
 			if (response.status === 200) {
 				return response.json();
 			}
@@ -160,6 +169,7 @@ export const createIssue = (roomUid, title) => {
 		})
 	})
 		.then(response => {
+			if (handleAuthError(response)) return;
 			if (response.status === 201) {
 				return response.json();
 			}
@@ -182,6 +192,7 @@ export const updateIssue = (roomUid, issueUid, title, estimatedPoints) => {
 			})
 		})
 		.then(response => {
+			if (handleAuthError(response)) return;
 			if (response.status === 200) {
 				return response.json();
 			} else {
@@ -209,6 +220,7 @@ export const flipIssueVoteCards = (roomUid, issueUid) => {
 			}
 		})
 		.then(response => {
+			if (handleAuthError(response)) return;
 			if (response.status === 200) {
 				return response.json();
 			}
@@ -227,6 +239,7 @@ export const removeIssueVotes = (roomUid, issueUid) => {
 			}
 		})
 		.then(response => {
+			if (handleAuthError(response)) return;
 			if (response.status === 204) {
 				return "OK";
 			}

@@ -33,11 +33,7 @@ export class Board extends Component {
 	}
 
 	handleClickOpenUpdateIssueDialog = () => {
-		this.setState(Object.assign(
-			{},
-			this.state,
-			{ updateIssueDialogOpen: true }
-		));
+		this.setState({ updateIssueDialogOpen: true });
 	};
 
 	handleClickFlipCard = () => {
@@ -67,11 +63,7 @@ export class Board extends Component {
 	};
 
 	handleUpdateIssueDialogClose = () => {
-		this.setState(Object.assign(
-			{},
-			this.state,
-			{ updateIssueDialogOpen: false }
-		));
+		this.setState({ updateIssueDialogOpen: false });
 	};
 
 	handleUpdateIssue = () => {
@@ -83,22 +75,14 @@ export class Board extends Component {
 		)
 			.then(data => {
 				if (data) {
-					this.setState(Object.assign(
-						{},
-						this.state,
-						{ updateIssueDialogOpen: false }
-					));
+					this.setState({ updateIssueDialogOpen: false });
 				}
 			})
 			.catch(error => console.log(error));
 	};
 
 	handleEstimatedPointsChange = (event) => {
-		this.setState(Object.assign(
-			{},
-			this.state,
-			{ currentIssueEstimatedPoints: event.target.value }
-		));
+		this.setState({ currentIssueEstimatedPoints: event.target.value });
 	}
 
 	isMyVote(storyPoint) {
@@ -161,6 +145,7 @@ export class Board extends Component {
 					<div>
 						{this.props.currentIssue && this.props.currentIssue.votes.map(
 							vote => <VoteCard
+								key={vote.participant.uid}
 								vote={vote}
 								vote_cards_status={this.props.currentIssue.vote_cards_status}
 							/>
@@ -173,7 +158,7 @@ export class Board extends Component {
 					marginRight: "250px",
 				}}>
 					{this.storyPoints.map(storyPoint =>
-						(<ButtonBase onClick={this.storyPointCardOnClick}>
+						(<ButtonBase key={storyPoint} onClick={this.storyPointCardOnClick}>
 							<StoryPointCard
 								storyPoint={storyPoint}
 								isMyVote={this.isMyVote(storyPoint)}

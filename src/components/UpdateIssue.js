@@ -16,9 +16,6 @@ export default class UpdateIssue extends React.Component {
 				>
 					<DialogTitle id="form-dialog-title">Update Issue</DialogTitle>
 					<DialogContent>
-						{/* <DialogContentText>
-							Create an issue.
-            </DialogContentText> */}
 						<TextField
 							autoFocus
 							margin="dense"
