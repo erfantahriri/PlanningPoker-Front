@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
-import CssBaseline from '@mui/material/CssBaseline';
-import FormControl from '@mui/material/FormControl';
-import Input from '@mui/material/Input';
-import InputLabel from '@mui/material/InputLabel';
+import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { createRoom } from '../services/api';
 import toastr from 'toastr';
+
+const fieldSx = {
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': { borderColor: 'rgba(148,163,184,0.2)' },
+    '&:hover fieldset': { borderColor: 'rgba(99,102,241,0.5)' },
+    '&.Mui-focused fieldset': { borderColor: '#6366f1' },
+  },
+};
 
 function CreateRoom() {
   const navigate = useNavigate();
@@ -33,41 +38,48 @@ function CreateRoom() {
   };
 
   return (
-    <Box sx={{ width: { xs: 'auto', sm: 400 }, mx: 'auto' }}>
-      <CssBaseline />
-      <Paper sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', p: '16px 24px 24px' }}>
-        <Typography component="h1" variant="h5">
-          Create A New Room
-        </Typography>
-        <Box component="form" sx={{ width: '100%', mt: 1 }}>
-          <FormControl margin="normal" required fullWidth>
-            <InputLabel htmlFor="title">Room Title</InputLabel>
-            <Input id="title" name="title" autoFocus
-              value={title} onChange={e => setTitle(e.target.value)} />
-          </FormControl>
-          <FormControl margin="normal" fullWidth>
-            <InputLabel htmlFor="description">Room Description</InputLabel>
-            <Input name="description" id="description"
-              value={description} onChange={e => setDescription(e.target.value)} />
-          </FormControl>
-          <FormControl margin="normal" required fullWidth>
-            <InputLabel htmlFor="creator">Creator Name</InputLabel>
-            <Input name="creator" id="creator"
-              value={creator} onChange={e => setCreator(e.target.value)} />
-          </FormControl>
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="secondary"
-            sx={{ mt: 3 }}
-            onClick={createRoomOnClick}
-          >
-            Create
-          </Button>
-        </Box>
-      </Paper>
-    </Box>
+    <Paper
+      elevation={0}
+      sx={{
+        p: 4,
+        background: 'rgba(30,41,59,0.85)',
+        border: '1px solid rgba(148,163,184,0.1)',
+        backdropFilter: 'blur(12px)',
+      }}
+    >
+      <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+        Create a Room
+      </Typography>
+      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+        Set up a new planning session for your team.
+      </Typography>
+      <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <TextField label="Room Title" variant="outlined" required fullWidth autoFocus
+          value={title} onChange={e => setTitle(e.target.value)} sx={fieldSx} />
+        <TextField label="Description (optional)" variant="outlined" fullWidth
+          value={description} onChange={e => setDescription(e.target.value)} sx={fieldSx} />
+        <TextField label="Your Name" variant="outlined" required fullWidth
+          value={creator} onChange={e => setCreator(e.target.value)} sx={fieldSx} />
+        <Button
+          type="submit"
+          variant="contained"
+          size="large"
+          fullWidth
+          onClick={createRoomOnClick}
+          sx={{
+            mt: 1, py: 1.5,
+            background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+            boxShadow: '0 4px 20px rgba(99,102,241,0.35)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #818cf8, #6366f1)',
+              boxShadow: '0 4px 28px rgba(99,102,241,0.5)',
+            },
+          }}
+        >
+          Create Room
+        </Button>
+      </Box>
+    </Paper>
   );
 }
 
