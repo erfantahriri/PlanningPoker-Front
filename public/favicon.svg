@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="64" height="64" rx="14" ry="14" fill="url(#bg)"/>
+
+  <!-- Spade shape -->
+  <!-- Top bulb (left) -->
+  <circle cx="25" cy="30" r="10" fill="white"/>
+  <!-- Top bulb (right) -->
+  <circle cx="39" cy="30" r="10" fill="white"/>
+  <!-- Top triangle point -->
+  <polygon points="32,12 44,34 20,34" fill="white"/>
+  <!-- Bottom stem -->
+  <path d="M28,42 Q32,55 36,42" fill="white"/>
+  <!-- Stem base -->
+  <rect x="25" y="42" width="14" height="4" rx="2" fill="white"/>
+</svg>
