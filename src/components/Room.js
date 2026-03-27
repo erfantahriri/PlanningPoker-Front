@@ -351,19 +351,37 @@ function Room() {
         {participants.map(participant => {
           const isMe = myUid === participant.uid;
           const initials = participant.name.slice(0, 2).toUpperCase();
+          const isVoter = participant.role !== 'spectator';
+          const votingActive = !!currentIssue && currentIssue.vote_cards_status === 'hidden';
+          const hasVoted = votingActive && isVoter &&
+            (currentIssue.votes ?? []).some(v => v.participant.uid === participant.uid);
+          const waitingToVote = votingActive && isVoter && !hasVoted;
           return (
             <ListItem key={participant.uid} sx={{
               borderRadius: 2, mb: 0.5, px: 1.5,
               minHeight: isMobile ? 56 : 48,
               bgcolor: isMe ? 'rgba(99,102,241,0.08)' : 'transparent',
             }}>
-              <Box sx={{
-                width: 36, height: 36, borderRadius: '50%', flexShrink: 0, mr: 1.5,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 13, fontWeight: 700,
-                background: isMe ? 'linear-gradient(135deg, #6366f1, #818cf8)' : 'rgba(148,163,184,0.15)',
-                color: isMe ? '#fff' : '#94a3b8',
-              }}>{initials}</Box>
+              {/* Avatar with vote-status dot */}
+              <Box sx={{ position: 'relative', flexShrink: 0, mr: 1.5 }}>
+                <Box sx={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 13, fontWeight: 700,
+                  background: isMe ? 'linear-gradient(135deg, #6366f1, #818cf8)' : 'rgba(148,163,184,0.15)',
+                  color: isMe ? '#fff' : '#94a3b8',
+                }}>{initials}</Box>
+                {(hasVoted || waitingToVote) && (
+                  <Tooltip title={hasVoted ? 'Voted' : 'Waiting…'}>
+                    <Box sx={{
+                      position: 'absolute', bottom: 0, right: 0,
+                      width: 10, height: 10, borderRadius: '50%',
+                      bgcolor: hasVoted ? '#10b981' : '#f59e0b',
+                      border: '2px solid #0f172a',
+                    }} />
+                  </Tooltip>
+                )}
+              </Box>
               <ListItemText
                 primary={isMe ? `${participant.name} (you)` : participant.name}
                 primaryTypographyProps={{ variant: 'body2', fontWeight: isMe ? 600 : 400, color: isMe ? '#f1f5f9' : 'text.secondary' }}
