@@ -7,6 +7,8 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { joinRoom } from '../services/api';
 import toastr from 'toastr';
+import InputAdornment from '@mui/material/InputAdornment';
+import LockIcon from '@mui/icons-material/Lock';
 
 const fieldSx = {
   '& .MuiOutlinedInput-root': {
@@ -21,10 +23,11 @@ function JoinRoom() {
   const [roomUid, setRoomUid] = useState('');
   const [participantName, setParticipantName] = useState('');
   const [role, setRole] = useState('voter');
+  const [password, setPassword] = useState('');
 
   const joinRoomOnClick = (event) => {
     event.preventDefault();
-    joinRoom(roomUid, participantName, role)
+    joinRoom(roomUid, participantName, role, password)
       .then(data => {
         if (data) {
           localStorage.setItem('accessToken', data.access_token);
@@ -36,7 +39,7 @@ function JoinRoom() {
           toastr.error('Something went wrong!');
         }
       })
-      .catch(error => console.log(error));
+      .catch(err => toastr.error(typeof err === 'string' ? err : 'Something went wrong!'));
   };
 
   return (
@@ -93,6 +96,14 @@ function JoinRoom() {
             </Box>
           ))}
         </Box>
+
+        <TextField
+          label="Room Password (if private)" variant="outlined" fullWidth type="password"
+          value={password} onChange={e => setPassword(e.target.value)}
+          inputProps={{ style: { fontSize: 16 } }}
+          InputProps={{ startAdornment: <InputAdornment position="start"><LockIcon sx={{ fontSize: 16, color: '#475569' }} /></InputAdornment> }}
+          sx={fieldSx}
+        />
 
         <Button
           type="submit"

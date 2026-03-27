@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getRoomIssues, getRoomParticipants, createIssue,
-  getRoomCurrentIssue, setRoomCurrentIssue, joinRoom
+  getRoomCurrentIssue, setRoomCurrentIssue, joinRoom, getRoomInfo
 } from '../services/api';
 import toastr from 'toastr';
 import AppBar from '@mui/material/AppBar';
@@ -54,8 +54,10 @@ function Room() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [joined, setJoined] = useState(!!localStorage.getItem('accessToken'));
+  const [roomInfo, setRoomInfo] = useState(null);
   const [nameInput, setNameInput] = useState('');
   const [roleInput, setRoleInput] = useState('voter');
+  const [passwordInput, setPasswordInput] = useState('');
   const [issues, setIssues] = useState([]);
   const [participants, setParticipants] = useState([]);
   const [createIssueDialogOpen, setCreateIssueDialogOpen] = useState(false);
@@ -69,10 +71,14 @@ function Room() {
   const rightTabRef = useRef(0);
   const mobileTabRef = useRef(0);
 
+  useEffect(() => {
+    getRoomInfo(roomUid).then(info => { if (info) setRoomInfo(info); });
+  }, [roomUid]);
+
   const handleJoin = (e) => {
     e.preventDefault();
     if (!nameInput.trim()) return;
-    joinRoom(roomUid, nameInput.trim(), roleInput)
+    joinRoom(roomUid, nameInput.trim(), roleInput, passwordInput)
       .then(data => {
         if (data) {
           localStorage.setItem('accessToken', data.access_token);
@@ -84,7 +90,7 @@ function Room() {
           toastr.error('Room not found or something went wrong.');
         }
       })
-      .catch(() => toastr.error('Could not join room.'));
+      .catch(err => toastr.error(typeof err === 'string' ? err : 'Could not join room.'));
   };
 
   const handleCopyRoomId = () => {
@@ -212,7 +218,9 @@ function Room() {
           background: 'rgba(30,41,59,0.85)', border: '1px solid rgba(148,163,184,0.1)',
           backdropFilter: 'blur(12px)', borderRadius: 3,
         }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>Join Room</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+            {roomInfo?.is_private ? '🔒 ' : ''}Join Room
+          </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>Room ID</Typography>
           <Chip label={roomUid} sx={{
             mb: 3, fontFamily: 'monospace', fontWeight: 600, maxWidth: '100%',
@@ -259,6 +267,18 @@ function Room() {
                 </Box>
               ))}
             </Box>
+            {roomInfo?.is_private && (
+              <TextField
+                label="Room Password" variant="outlined" required fullWidth type="password"
+                value={passwordInput} onChange={e => setPasswordInput(e.target.value)}
+                inputProps={{ style: { fontSize: 16 } }}
+                sx={{ '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: 'rgba(148,163,184,0.2)' },
+                  '&:hover fieldset': { borderColor: 'rgba(99,102,241,0.5)' },
+                  '&.Mui-focused fieldset': { borderColor: '#6366f1' },
+                }}}
+              />
+            )}
             <Button type="submit" variant="contained" size="large" fullWidth sx={{
               py: 1.75, fontSize: 16,
               background: 'linear-gradient(135deg, #6366f1, #4f46e5)',

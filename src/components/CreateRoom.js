@@ -5,6 +5,8 @@ import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { createRoom } from '../services/api';
 import toastr from 'toastr';
 
@@ -21,10 +23,16 @@ function CreateRoom({ onCreated }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [creator, setCreator] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [password, setPassword] = useState('');
 
   const createRoomOnClick = (event) => {
     event.preventDefault();
-    createRoom(title, description, creator)
+    if (isPrivate && !password.trim()) {
+      toastr.error('Please set a password for the private room.');
+      return;
+    }
+    createRoom(title, description, creator, isPrivate, isPrivate ? password : '')
       .then(data => {
         if (data) {
           localStorage.setItem("accessToken", data.creator.access_token);
@@ -56,11 +64,55 @@ function CreateRoom({ onCreated }) {
       </Typography>
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField label="Room Title" variant="outlined" required fullWidth autoFocus
-          value={title} onChange={e => setTitle(e.target.value)} sx={fieldSx} />
+          value={title} onChange={e => setTitle(e.target.value)}
+          inputProps={{ style: { fontSize: 16 } }} sx={fieldSx} />
         <TextField label="Description (optional)" variant="outlined" fullWidth
-          value={description} onChange={e => setDescription(e.target.value)} sx={fieldSx} />
+          value={description} onChange={e => setDescription(e.target.value)}
+          inputProps={{ style: { fontSize: 16 } }} sx={fieldSx} />
         <TextField label="Your Name" variant="outlined" required fullWidth
-          value={creator} onChange={e => setCreator(e.target.value)} sx={fieldSx} />
+          value={creator} onChange={e => setCreator(e.target.value)}
+          inputProps={{ style: { fontSize: 16 } }} sx={fieldSx} />
+
+        {/* Private toggle */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {[
+            { value: false, label: '🌐 Public', desc: 'Anyone can join', Icon: LockOpenIcon },
+            { value: true, label: '🔒 Private', desc: 'Password required', Icon: LockIcon },
+          ].map(opt => (
+            <Box
+              key={String(opt.value)}
+              onClick={() => setIsPrivate(opt.value)}
+              sx={{
+                flex: 1, p: 1.5, borderRadius: 2, cursor: 'pointer',
+                border: isPrivate === opt.value
+                  ? '2px solid #6366f1'
+                  : '1px solid rgba(148,163,184,0.15)',
+                bgcolor: isPrivate === opt.value
+                  ? 'rgba(99,102,241,0.1)'
+                  : 'rgba(15,23,42,0.4)',
+                transition: 'all 0.15s',
+                '&:active': { transform: 'scale(0.98)' },
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 700, color: isPrivate === opt.value ? '#818cf8' : '#94a3b8' }}>
+                {opt.label}
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#475569', lineHeight: 1.3 }}>
+                {opt.desc}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+
+        {isPrivate && (
+          <TextField
+            label="Room Password" variant="outlined" required fullWidth type="password"
+            value={password} onChange={e => setPassword(e.target.value)}
+            inputProps={{ style: { fontSize: 16 } }}
+            sx={fieldSx}
+          />
+        )}
+
         <Button
           type="submit"
           variant="contained"

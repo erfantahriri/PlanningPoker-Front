@@ -11,6 +11,7 @@ import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import LockIcon from '@mui/icons-material/Lock';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import PeopleIcon from '@mui/icons-material/People';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -155,9 +156,14 @@ function RoomsListPage() {
                 <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
                     <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#f1f5f9', lineHeight: 1.3 }}>
-                        {room.title}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#f1f5f9', lineHeight: 1.3 }}>
+                          {room.title}
+                        </Typography>
+                        {room.is_private && (
+                          <LockIcon sx={{ fontSize: 14, color: '#f59e0b', flexShrink: 0 }} />
+                        )}
+                      </Box>
                       {room.description && (
                         <Typography variant="body2" sx={{
                           color: '#64748b', mt: 0.5, lineHeight: 1.4,

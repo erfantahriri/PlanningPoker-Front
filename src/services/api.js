@@ -5,6 +5,7 @@ const baseUrl = "http://127.0.0.1:8000"
 const urls = {
 	listRooms: baseUrl + "/v1/rooms/",
 	createRoom: baseUrl + "/v1/rooms/",
+	roomInfo: baseUrl + "/v1/rooms/roomUid/info",
 	joinRoom: baseUrl + "/v1/rooms/roomUid/join",
 	getRoomParticipants: baseUrl + "/v1/rooms/roomUid/participants",
 	getRoomIssues: baseUrl + "/v1/rooms/roomUid/issues",
@@ -40,7 +41,16 @@ export const getRooms = () => {
 }
 
 // No auth — public endpoint
-export const createRoom = (title, description, creator_name) => {
+export const getRoomInfo = (roomUid) => {
+	return fetch(urls.roomInfo.replace('roomUid', roomUid))
+		.then(response => {
+			if (response.status === 200) return response.json();
+		})
+		.catch(err => console.log(err))
+}
+
+// No auth — public endpoint
+export const createRoom = (title, description, creator_name, is_private = false, password = '') => {
 	return fetch(urls.createRoom, {
 		method: 'POST',
 		headers: {
@@ -49,7 +59,9 @@ export const createRoom = (title, description, creator_name) => {
 		body: JSON.stringify({
 			title: title,
 			description: description,
-			creator_name: creator_name
+			creator_name: creator_name,
+			is_private: is_private,
+			password: password,
 		})
 	})
 		.then(response => {
@@ -61,20 +73,23 @@ export const createRoom = (title, description, creator_name) => {
 }
 
 // No auth — public endpoint
-export const joinRoom = (roomUid, name, role = 'voter') => {
+export const joinRoom = (roomUid, name, role = 'voter', password = '') => {
 	return fetch(urls.joinRoom.replace('roomUid', roomUid), {
 		method: 'POST',
 		headers: {
 			"Content-Type": "application/json"
 		},
-		body: JSON.stringify({ name, role })
+		body: JSON.stringify({ name, role, password })
 	})
 		.then(response => {
 			if (response.status === 201 || response.status === 200) {
 				return response.json();
 			}
+			if (response.status === 403) {
+				return response.json().then(data => Promise.reject(data.detail || 'Incorrect password.'));
+			}
 		})
-		.catch(err => console.log(err))
+		.catch(err => { throw err; })
 }
 
 export const getRoomParticipants = (roomUid) => {
