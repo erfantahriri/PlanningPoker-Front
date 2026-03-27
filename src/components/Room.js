@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getRoomIssues, getRoomParticipants, createIssue,
-  getRoomCurrentIssue, setRoomCurrentIssue, joinRoom
+  getRoomCurrentIssue, setRoomCurrentIssue, joinRoom, getRoomInfo,
+  deleteIssue, updateIssue, renameParticipant
 } from '../services/api';
 import toastr from 'toastr';
 import AppBar from '@mui/material/AppBar';
@@ -30,7 +31,10 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import EditIcon from '@mui/icons-material/Edit';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -54,8 +58,10 @@ function Room() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [joined, setJoined] = useState(!!localStorage.getItem('accessToken'));
+  const [roomInfo, setRoomInfo] = useState(null);
   const [nameInput, setNameInput] = useState('');
   const [roleInput, setRoleInput] = useState('voter');
+  const [passwordInput, setPasswordInput] = useState('');
   const [issues, setIssues] = useState([]);
   const [participants, setParticipants] = useState([]);
   const [createIssueDialogOpen, setCreateIssueDialogOpen] = useState(false);
@@ -66,13 +72,24 @@ function Room() {
   const [mobileTab, setMobileTab] = useState(0); // 0=board 1=issues 2=chat 3=people
   const [chatMessages, setChatMessages] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [editingIssueUid, setEditingIssueUid] = useState(null);
+  const [editingIssueTitle, setEditingIssueTitle] = useState('');
+  const [editingMyName, setEditingMyName] = useState(false);
+  const [myNameInput, setMyNameInput] = useState('');
+  const [timerState, setTimerState] = useState(null); // { duration, startedAt }
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [reactions, setReactions] = useState([]);
   const rightTabRef = useRef(0);
   const mobileTabRef = useRef(0);
+
+  useEffect(() => {
+    getRoomInfo(roomUid).then(info => { if (info) setRoomInfo(info); });
+  }, [roomUid]);
 
   const handleJoin = (e) => {
     e.preventDefault();
     if (!nameInput.trim()) return;
-    joinRoom(roomUid, nameInput.trim(), roleInput)
+    joinRoom(roomUid, nameInput.trim(), roleInput, passwordInput)
       .then(data => {
         if (data) {
           localStorage.setItem('accessToken', data.access_token);
@@ -84,7 +101,7 @@ function Room() {
           toastr.error('Room not found or something went wrong.');
         }
       })
-      .catch(() => toastr.error('Could not join room.'));
+      .catch(err => toastr.error(typeof err === 'string' ? err : 'Could not join room.'));
   };
 
   const handleCopyRoomId = () => {
@@ -116,6 +133,84 @@ function Room() {
       .then(data => { if (!data) toastr.error("Something went wrong!"); })
       .catch(error => console.log(error));
     if (isMobile) setMobileTab(0);
+  };
+
+  useEffect(() => {
+    if (!timerState) return;
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - new Date(timerState.startedAt)) / 1000);
+      const remaining = timerState.duration - elapsed;
+      if (remaining <= 0) {
+        setRemainingSeconds(0);
+        setTimerState(null);
+        clearInterval(interval);
+      } else {
+        setRemainingSeconds(remaining);
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [timerState]);
+
+  const handleTimerStart = (duration) => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+    ws.current.send(JSON.stringify({ type: 'timer_start', content: { duration } }));
+  };
+
+  const handleTimerStop = () => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+    ws.current.send(JSON.stringify({ type: 'timer_stop', content: {} }));
+  };
+
+  const handleReaction = (emoji) => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+    ws.current.send(JSON.stringify({
+      type: 'reaction',
+      content: {
+        participantName: localStorage.getItem('userName') || '',
+        emoji,
+      },
+    }));
+  };
+
+  const handleDeleteIssue = (e, issueUid) => {
+    e.stopPropagation();
+    deleteIssue(roomUid, issueUid)
+      .then(res => {
+        if (res) setIssues(prev => prev.filter(i => i.uid !== issueUid));
+        else toastr.error('Could not delete issue.');
+      });
+  };
+
+  const handleStartRenameIssue = (e, issue) => {
+    e.stopPropagation();
+    setEditingIssueUid(issue.uid);
+    setEditingIssueTitle(issue.title);
+  };
+
+  const handleSaveRenameIssue = (issue) => {
+    if (!editingIssueTitle.trim() || editingIssueTitle === issue.title) {
+      setEditingIssueUid(null);
+      return;
+    }
+    updateIssue(roomUid, issue.uid, editingIssueTitle.trim(), issue.estimated_points)
+      .then(data => {
+        if (data) setIssues(prev => prev.map(i => i.uid === data.uid ? data : i));
+        setEditingIssueUid(null);
+      });
+  };
+
+  const handleSaveMyName = () => {
+    const trimmed = myNameInput.trim();
+    if (!trimmed) { setEditingMyName(false); return; }
+    const myUidLocal = localStorage.getItem('userUid');
+    renameParticipant(roomUid, myUidLocal, trimmed)
+      .then(data => {
+        if (data) {
+          localStorage.setItem('userName', trimmed);
+          setParticipants(prev => prev.map(p => p.uid === myUidLocal ? { ...p, name: trimmed } : p));
+        }
+        setEditingMyName(false);
+      });
   };
 
   const handleSendChat = (text) => {
@@ -155,6 +250,9 @@ function Room() {
           case "add_participant":
             setParticipants(prev => [message.content, ...prev]);
             break;
+          case "rename_participant":
+            setParticipants(prev => prev.map(p => p.uid === message.content.uid ? { ...p, name: message.content.name } : p));
+            break;
           case "current_issue":
             setCurrentIssue(message.content);
             setIssues(prev => prev.map(i => ({ ...i, is_current: i.uid === message.content.uid })));
@@ -169,6 +267,19 @@ function Room() {
             setChatMessages(prev => [...prev, message.content]);
             const isOnChat = mobileTabRef.current === 2 || rightTabRef.current === 1;
             if (!isOnChat) setUnreadCount(c => c + 1);
+            break;
+          case "timer_start":
+            setTimerState({ duration: message.content.duration, startedAt: message.content.started_at });
+            setRemainingSeconds(message.content.duration);
+            break;
+          case "timer_stop":
+            setTimerState(null);
+            setRemainingSeconds(0);
+            break;
+          case "reaction":
+            const reaction = { ...message.content, _key: message.content.id };
+            setReactions(prev => [...prev, reaction]);
+            setTimeout(() => setReactions(prev => prev.filter(r => r._key !== reaction._key)), 3000);
             break;
           default:
             break;
@@ -200,19 +311,26 @@ function Room() {
         background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', px: 2,
       }}>
-        <Box sx={{
-          width: 40, height: 40, borderRadius: '12px',
-          background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 20, userSelect: 'none', mb: 3,
-          boxShadow: '0 8px 32px rgba(99,102,241,0.4)',
-        }}>♠</Box>
+        <Box
+          onClick={() => navigate('/')}
+          sx={{
+            width: 40, height: 40, borderRadius: '12px',
+            background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 20, userSelect: 'none', mb: 3, cursor: 'pointer',
+            boxShadow: '0 8px 32px rgba(99,102,241,0.4)',
+            transition: 'transform 0.15s, box-shadow 0.15s',
+            '&:hover': { transform: 'scale(1.08)', boxShadow: '0 8px 40px rgba(99,102,241,0.6)' },
+          }}
+        >♠</Box>
         <Paper elevation={0} sx={{
           p: { xs: 3, sm: 4 }, width: '100%', maxWidth: 420,
           background: 'rgba(30,41,59,0.85)', border: '1px solid rgba(148,163,184,0.1)',
           backdropFilter: 'blur(12px)', borderRadius: 3,
         }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>Join Room</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+            {roomInfo?.is_private ? '🔒 ' : ''}Join Room
+          </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>Room ID</Typography>
           <Chip label={roomUid} sx={{
             mb: 3, fontFamily: 'monospace', fontWeight: 600, maxWidth: '100%',
@@ -259,6 +377,18 @@ function Room() {
                 </Box>
               ))}
             </Box>
+            {roomInfo?.is_private && (
+              <TextField
+                label="Room Password" variant="outlined" required fullWidth type="password"
+                value={passwordInput} onChange={e => setPasswordInput(e.target.value)}
+                inputProps={{ style: { fontSize: 16 } }}
+                sx={{ '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: 'rgba(148,163,184,0.2)' },
+                  '&:hover fieldset': { borderColor: 'rgba(99,102,241,0.5)' },
+                  '&.Mui-focused fieldset': { borderColor: '#6366f1' },
+                }}}
+              />
+            )}
             <Button type="submit" variant="contained" size="large" fullWidth sx={{
               py: 1.75, fontSize: 16,
               background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
@@ -283,16 +413,16 @@ function Room() {
         )}
         {issues.map(issue => (
           <ListItem
-            button
             key={issue.uid}
-            onClick={() => issueItemOnClick(issue)}
+            onClick={() => editingIssueUid !== issue.uid && issueItemOnClick(issue)}
             sx={{
               borderRadius: 2, mb: 0.5, px: 1.5, alignItems: 'flex-start',
               minHeight: isMobile ? 56 : 48,
               bgcolor: issue.is_current ? 'rgba(99,102,241,0.1)' : 'transparent',
               border: issue.is_current ? '1px solid rgba(99,102,241,0.25)' : '1px solid transparent',
-              '&:hover': { bgcolor: 'rgba(148,163,184,0.05)' },
-              '&:active': { bgcolor: 'rgba(99,102,241,0.15)' },
+              cursor: editingIssueUid === issue.uid ? 'default' : 'pointer',
+              '&:hover': { bgcolor: editingIssueUid === issue.uid ? undefined : 'rgba(148,163,184,0.05)' },
+              '&:hover .issue-actions': { opacity: 1 },
             }}
           >
             <Box sx={{ mt: 0.4, mr: 1.5, flexShrink: 0 }}>
@@ -302,18 +432,48 @@ function Room() {
               }
             </Box>
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-              <Typography variant="body2" sx={{
-                fontWeight: issue.is_current ? 600 : 400,
-                color: issue.is_current ? '#f1f5f9' : 'text.secondary',
-                lineHeight: 1.4, whiteSpace: 'normal',
-              }}>{issue.title}</Typography>
-              {issue.estimated_points && (
-                <Chip label={issue.estimated_points} size="small" sx={{
-                  mt: 0.5, height: 18, fontSize: 10,
-                  bgcolor: 'rgba(16,185,129,0.15)', color: '#34d399',
-                }} />
+              {editingIssueUid === issue.uid ? (
+                <TextField
+                  autoFocus
+                  size="small"
+                  fullWidth
+                  value={editingIssueTitle}
+                  onChange={e => setEditingIssueTitle(e.target.value)}
+                  onBlur={() => handleSaveRenameIssue(issue)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleSaveRenameIssue(issue);
+                    if (e.key === 'Escape') setEditingIssueUid(null);
+                  }}
+                  onClick={e => e.stopPropagation()}
+                  inputProps={{ style: { fontSize: 13 } }}
+                  sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(99,102,241,0.5)' } } }}
+                />
+              ) : (
+                <>
+                  <Typography variant="body2" sx={{
+                    fontWeight: issue.is_current ? 600 : 400,
+                    color: issue.is_current ? '#f1f5f9' : 'text.secondary',
+                    lineHeight: 1.4, whiteSpace: 'normal',
+                  }}>{issue.title}</Typography>
+                  {issue.estimated_points && (
+                    <Chip label={issue.estimated_points} size="small" sx={{
+                      mt: 0.5, height: 18, fontSize: 10,
+                      bgcolor: 'rgba(16,185,129,0.15)', color: '#34d399',
+                    }} />
+                  )}
+                </>
               )}
             </Box>
+            {editingIssueUid !== issue.uid && (
+              <Box className="issue-actions" sx={{ display: 'flex', gap: 0.25, opacity: isMobile ? 1 : 0, transition: 'opacity 0.15s', flexShrink: 0 }}>
+                <IconButton size="small" onClick={e => handleStartRenameIssue(e, issue)} sx={{ color: '#475569', '&:hover': { color: '#818cf8' } }}>
+                  <EditIcon sx={{ fontSize: 14 }} />
+                </IconButton>
+                <IconButton size="small" onClick={e => handleDeleteIssue(e, issue.uid)} sx={{ color: '#475569', '&:hover': { color: '#f43f5e' } }}>
+                  <DeleteOutlineIcon sx={{ fontSize: 14 }} />
+                </IconButton>
+              </Box>
+            )}
           </ListItem>
         ))}
       </List>
@@ -382,10 +542,38 @@ function Room() {
                   </Tooltip>
                 )}
               </Box>
-              <ListItemText
-                primary={isMe ? `${participant.name} (you)` : participant.name}
-                primaryTypographyProps={{ variant: 'body2', fontWeight: isMe ? 600 : 400, color: isMe ? '#f1f5f9' : 'text.secondary' }}
-              />
+              {isMe && editingMyName ? (
+                <TextField
+                  autoFocus
+                  size="small"
+                  value={myNameInput}
+                  onChange={e => setMyNameInput(e.target.value)}
+                  onBlur={handleSaveMyName}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleSaveMyName();
+                    if (e.key === 'Escape') setEditingMyName(false);
+                  }}
+                  inputProps={{ style: { fontSize: 13 } }}
+                  sx={{
+                    flexGrow: 1, mr: 1,
+                    '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(99,102,241,0.5)' } }
+                  }}
+                />
+              ) : (
+                <ListItemText
+                  primary={isMe ? `${participant.name} (you)` : participant.name}
+                  primaryTypographyProps={{ variant: 'body2', fontWeight: isMe ? 600 : 400, color: isMe ? '#f1f5f9' : 'text.secondary' }}
+                />
+              )}
+              {isMe && !editingMyName && (
+                <IconButton
+                  size="small"
+                  onClick={() => { setMyNameInput(participant.name); setEditingMyName(true); }}
+                  sx={{ color: '#334155', '&:hover': { color: '#818cf8' }, mr: 0.5, flexShrink: 0 }}
+                >
+                  <EditIcon sx={{ fontSize: 13 }} />
+                </IconButton>
+              )}
               <Chip
                 label={participant.role === 'spectator' ? '👁 Watch' : '🃏 Vote'}
                 size="small"
@@ -419,13 +607,16 @@ function Room() {
           bgcolor: 'rgba(15,23,42,0.95)', borderBottom: '1px solid rgba(148,163,184,0.08)', backdropFilter: 'blur(12px)',
         }}>
           <Toolbar sx={{ gap: 1.5, minHeight: '52px !important', px: 2 }}>
-            <Box sx={{
-              width: 28, height: 28, borderRadius: '8px',
-              background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, userSelect: 'none', flexShrink: 0,
-            }}>♠</Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#f1f5f9' }}>Planning Poker</Typography>
+            <Box
+              onClick={() => navigate('/')}
+              sx={{
+                width: 28, height: 28, borderRadius: '8px',
+                background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 14, userSelect: 'none', flexShrink: 0, cursor: 'pointer',
+              }}
+            >♠</Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#f1f5f9', cursor: 'pointer' }} onClick={() => navigate('/')}>Planning Poker</Typography>
             <Box sx={{ flexGrow: 1 }} />
             <Chip
               label={copied ? 'Copied!' : roomUid}
@@ -440,6 +631,11 @@ function Room() {
                 fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
               }}
             />
+            <Tooltip title="Session summary">
+              <IconButton size="small" onClick={() => navigate(`/rooms/${roomUid}/summary`)} sx={{ color: '#475569', '&:hover': { color: '#818cf8' } }}>
+                <AssessmentIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Leave room">
               <IconButton size="small" onClick={handleExit} sx={{ color: '#f43f5e', ml: 0.5 }}>
                 <ExitToAppIcon fontSize="small" />
@@ -450,7 +646,7 @@ function Room() {
 
         {/* Mobile content */}
         <Box sx={{ flexGrow: 1, overflow: 'hidden', mt: '52px', mb: 'calc(56px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }}>
-          {mobileTab === 0 && <Board currentIssue={currentIssue} roomUid={roomUid} />}
+          {mobileTab === 0 && <Board currentIssue={currentIssue} roomUid={roomUid} cardSet={roomInfo?.card_set} timerActive={!!timerState} remainingSeconds={remainingSeconds} onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} reactions={reactions} onReaction={handleReaction} />}
           {mobileTab === 1 && (
             <Box sx={{ height: '100%', bgcolor: 'rgba(15,23,42,0.98)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               {issuesPanel}
@@ -532,13 +728,16 @@ function Room() {
         bgcolor: 'rgba(15,23,42,0.95)', borderBottom: '1px solid rgba(148,163,184,0.08)', backdropFilter: 'blur(12px)',
       }}>
         <Toolbar sx={{ gap: 2 }}>
-          <Box sx={{
-            width: 32, height: 32, borderRadius: '8px',
-            background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16, userSelect: 'none', flexShrink: 0,
-          }}>♠</Box>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#f1f5f9' }}>Planning Poker</Typography>
+          <Box
+            onClick={() => navigate('/')}
+            sx={{
+              width: 32, height: 32, borderRadius: '8px',
+              background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, userSelect: 'none', flexShrink: 0, cursor: 'pointer',
+            }}
+          >♠</Box>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#f1f5f9', cursor: 'pointer' }} onClick={() => navigate('/')}>Planning Poker</Typography>
           <Box sx={{ flexGrow: 1 }} />
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>Room ID:</Typography>
           <Chip label={roomUid} size="small" sx={{
@@ -548,6 +747,11 @@ function Room() {
           <Tooltip title={copied ? "Copied!" : "Copy Room ID"}>
             <IconButton size="small" onClick={handleCopyRoomId} sx={{ color: 'text.secondary' }}>
               <ContentCopyIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Session summary">
+            <IconButton size="small" onClick={() => navigate(`/rooms/${roomUid}/summary`)} sx={{ color: '#475569', '&:hover': { color: '#818cf8' } }}>
+              <AssessmentIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Leave room">
@@ -571,7 +775,7 @@ function Room() {
 
       <Box component="main" sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <Toolbar />
-        <Board currentIssue={currentIssue} roomUid={roomUid} />
+        <Board currentIssue={currentIssue} roomUid={roomUid} cardSet={roomInfo?.card_set} timerActive={!!timerState} remainingSeconds={remainingSeconds} onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} reactions={reactions} onReaction={handleReaction} />
       </Box>
 
       <Drawer variant="permanent" anchor="right" sx={{

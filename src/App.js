@@ -4,6 +4,8 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Main from './components/Main';
 import Room from './components/Room';
+import RoomsListPage from './components/RoomsListPage';
+import RoomSummary from './components/RoomSummary';
 
 const theme = createTheme({
   palette: {
@@ -57,7 +59,9 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Main />} />
+          <Route path="/rooms/" element={<RoomsListPage />} />
           <Route path="/rooms/:roomUid" element={<Room />} />
+          <Route path="/rooms/:roomUid/summary" element={<RoomSummary />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
