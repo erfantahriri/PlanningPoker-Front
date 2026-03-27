@@ -22,7 +22,7 @@ function JoinRoom() {
   const navigate = useNavigate();
   const [roomUid, setRoomUid] = useState('');
   const [participantName, setParticipantName] = useState('');
-  const [role, setRole] = useState('voter');
+  const [role, setRole] = useState('dev');
   const [password, setPassword] = useState('');
 
   const joinRoomOnClick = (event) => {
@@ -34,6 +34,7 @@ function JoinRoom() {
           localStorage.setItem('userUid', data.uid);
           localStorage.setItem('userName', participantName);
           localStorage.setItem('userRole', role);
+          localStorage.setItem('roomUid', roomUid);
           navigate('/rooms/' + roomUid);
         } else {
           toastr.error('Something went wrong!');
@@ -67,16 +68,18 @@ function JoinRoom() {
           inputProps={{ style: { fontSize: 16 } }} sx={fieldSx} />
 
         {/* Role picker */}
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
           {[
-            { value: 'voter', label: '🃏 Voter', desc: 'Cast story point votes' },
-            { value: 'spectator', label: '👁 Spectator', desc: 'Watch without voting' },
+            { value: 'dev', label: '🧑‍💻 Dev', desc: 'Estimates story points' },
+            { value: 'designer', label: '🎨 Designer', desc: 'Estimates design tasks' },
+            { value: 'pm', label: '📋 PM', desc: 'Facilitates, watch only' },
+            { value: 'em', label: '👔 EM', desc: 'Observes, watch only' },
           ].map(opt => (
             <Box
               key={opt.value}
               onClick={() => setRole(opt.value)}
               sx={{
-                flex: 1, p: 1.5, borderRadius: 2, cursor: 'pointer',
+                p: 1.5, borderRadius: 2, cursor: 'pointer',
                 border: role === opt.value
                   ? '2px solid #6366f1'
                   : '1px solid rgba(148,163,184,0.15)',

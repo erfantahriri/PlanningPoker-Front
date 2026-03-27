@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   getRoomIssues, getRoomParticipants, createIssue,
   getRoomCurrentIssue, setRoomCurrentIssue, joinRoom, getRoomInfo,
-  deleteIssue, updateIssue, renameParticipant
+  deleteIssue, updateIssue, renameParticipant, updateRoom, updateParticipant
 } from '../services/api';
 import toastr from 'toastr';
 import AppBar from '@mui/material/AppBar';
@@ -21,6 +21,8 @@ import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -49,6 +51,28 @@ import Chat from './Chat';
 
 const drawerWidth = 256;
 const BaseRoomWsUrl = `ws://127.0.0.1:8000/ws/rooms/`;
+const CARD_SET_LABELS = { standard: '🎯 Standard', fibonacci: '🌀 Fibonacci', tshirt: '👕 T-Shirt' };
+const CARD_SETS_LIST = [
+  { value: 'standard', label: '🎯 Standard' },
+  { value: 'fibonacci', label: '🌀 Fibonacci' },
+  { value: 'tshirt', label: '👕 T-Shirt' },
+];
+
+const ROLES = [
+  { value: 'dev',      emoji: '🧑‍💻', label: 'Dev',      desc: 'Estimates story points',  canVote: true  },
+  { value: 'designer', emoji: '🎨', label: 'Designer', desc: 'Estimates design tasks',   canVote: true  },
+  { value: 'pm',       emoji: '📋', label: 'PM',       desc: 'Facilitates, watch only',  canVote: false },
+  { value: 'em',       emoji: '👔', label: 'EM',       desc: 'Observes, watch only',     canVote: false },
+];
+// include legacy values so existing participants render correctly
+const ROLE_META = {
+  dev:       { emoji: '🧑‍💻', label: 'Dev',      canVote: true  },
+  designer:  { emoji: '🎨', label: 'Designer', canVote: true  },
+  pm:        { emoji: '📋', label: 'PM',       canVote: false },
+  em:        { emoji: '👔', label: 'EM',       canVote: false },
+  voter:     { emoji: '🃏', label: 'Voter',    canVote: true  },
+  spectator: { emoji: '👁', label: 'Spectator',canVote: false },
+};
 
 function Room() {
   const { roomUid } = useParams();
@@ -57,10 +81,12 @@ function Room() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const [joined, setJoined] = useState(!!localStorage.getItem('accessToken'));
+  const [joined, setJoined] = useState(
+    !!localStorage.getItem('accessToken') && localStorage.getItem('roomUid') === roomUid
+  );
   const [roomInfo, setRoomInfo] = useState(null);
   const [nameInput, setNameInput] = useState('');
-  const [roleInput, setRoleInput] = useState('voter');
+  const [roleInput, setRoleInput] = useState('dev');
   const [passwordInput, setPasswordInput] = useState('');
   const [issues, setIssues] = useState([]);
   const [participants, setParticipants] = useState([]);
@@ -79,6 +105,11 @@ function Room() {
   const [timerState, setTimerState] = useState(null); // { duration, startedAt }
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [reactions, setReactions] = useState([]);
+  const [editingRoomTitle, setEditingRoomTitle] = useState(false);
+  const [roomTitleInput, setRoomTitleInput] = useState('');
+  const [cardSetMenuAnchor, setCardSetMenuAnchor] = useState(null);
+  const [roleMenuAnchor, setRoleMenuAnchor] = useState(null);
+  const [roleMenuTarget, setRoleMenuTarget] = useState(null); // participant uid
   const rightTabRef = useRef(0);
   const mobileTabRef = useRef(0);
 
@@ -96,6 +127,7 @@ function Room() {
           localStorage.setItem('userUid', data.uid);
           localStorage.setItem('userName', nameInput.trim());
           localStorage.setItem('userRole', roleInput);
+          localStorage.setItem('roomUid', roomUid);
           setJoined(true);
         } else {
           toastr.error('Room not found or something went wrong.');
@@ -116,6 +148,7 @@ function Room() {
     localStorage.removeItem('userUid');
     localStorage.removeItem('userName');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('roomUid');
     navigate('/');
   };
 
@@ -213,6 +246,38 @@ function Room() {
       });
   };
 
+  const handleSaveRoomTitle = () => {
+    const trimmed = roomTitleInput.trim();
+    if (!trimmed || trimmed === roomInfo?.title) { setEditingRoomTitle(false); return; }
+    updateRoom(roomUid, { title: trimmed }).then(data => {
+      if (data) setRoomInfo(prev => ({ ...prev, title: data.title }));
+      setEditingRoomTitle(false);
+    });
+  };
+
+  const handleChangeCardSet = (cardSet) => {
+    setCardSetMenuAnchor(null);
+    if (cardSet === roomInfo?.card_set) return;
+    updateRoom(roomUid, { card_set: cardSet }).then(data => {
+      if (data) setRoomInfo(prev => ({ ...prev, card_set: data.card_set }));
+    });
+  };
+
+  const handleChangeRole = (participantUid, newRole) => {
+    setRoleMenuAnchor(null);
+    setRoleMenuTarget(null);
+    // optimistic update
+    setParticipants(prev => prev.map(p => p.uid === participantUid ? { ...p, role: newRole } : p));
+    const myUidNow = localStorage.getItem('userUid');
+    if (participantUid === myUidNow) localStorage.setItem('userRole', newRole);
+    updateParticipant(roomUid, participantUid, { role: newRole }).then(data => {
+      if (data) {
+        setParticipants(prev => prev.map(p => p.uid === participantUid ? { ...p, role: data.role } : p));
+        if (participantUid === myUidNow) localStorage.setItem('userRole', data.role);
+      }
+    });
+  };
+
   const handleSendChat = (text) => {
     if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
     const myUid = localStorage.getItem('userUid');
@@ -253,6 +318,12 @@ function Room() {
           case "rename_participant":
             setParticipants(prev => prev.map(p => p.uid === message.content.uid ? { ...p, name: message.content.name } : p));
             break;
+          case "update_participant":
+            setParticipants(prev => prev.map(p => p.uid === message.content.uid ? { ...p, ...message.content } : p));
+            if (message.content.uid === localStorage.getItem('userUid')) {
+              localStorage.setItem('userRole', message.content.role);
+            }
+            break;
           case "current_issue":
             setCurrentIssue(message.content);
             setIssues(prev => prev.map(i => ({ ...i, is_current: i.uid === message.content.uid })));
@@ -281,6 +352,9 @@ function Room() {
             setReactions(prev => [...prev, reaction]);
             setTimeout(() => setReactions(prev => prev.filter(r => r._key !== reaction._key)), 3000);
             break;
+          case "update_room":
+            setRoomInfo(prev => prev ? { ...prev, ...message.content } : message.content);
+            break;
           default:
             break;
         }
@@ -302,6 +376,7 @@ function Room() {
   }, [roomUid, joined]);
 
   const myUid = localStorage.getItem('userUid');
+  const myRole = participants.find(p => p.uid === myUid)?.role ?? localStorage.getItem('userRole');
 
   // ── Join screen ────────────────────────────────────────────────────────────
   if (!joined) {
@@ -348,16 +423,13 @@ function Room() {
               }}}
             />
             {/* Role picker */}
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {[
-                { value: 'voter', label: '🃏 Voter', desc: 'Cast story point votes' },
-                { value: 'spectator', label: '👁 Spectator', desc: 'Watch without voting' },
-              ].map(opt => (
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+              {ROLES.map(opt => (
                 <Box
                   key={opt.value}
                   onClick={() => setRoleInput(opt.value)}
                   sx={{
-                    flex: 1, p: 1.5, borderRadius: 2, cursor: 'pointer',
+                    p: 1.5, borderRadius: 2, cursor: 'pointer',
                     border: roleInput === opt.value
                       ? '2px solid #6366f1'
                       : '1px solid rgba(148,163,184,0.15)',
@@ -369,9 +441,9 @@ function Room() {
                   }}
                 >
                   <Typography variant="body2" sx={{ fontWeight: 700, color: roleInput === opt.value ? '#818cf8' : '#94a3b8' }}>
-                    {opt.label}
+                    {opt.emoji} {opt.label}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: '#475569', lineHeight: 1.3 }}>
+                  <Typography variant="caption" sx={{ color: '#475569', lineHeight: 1.3, display: 'block', mt: 0.25 }}>
                     {opt.desc}
                   </Typography>
                 </Box>
@@ -511,7 +583,7 @@ function Room() {
         {participants.map(participant => {
           const isMe = myUid === participant.uid;
           const initials = participant.name.slice(0, 2).toUpperCase();
-          const isVoter = participant.role !== 'spectator';
+          const isVoter = ROLE_META[participant.role]?.canVote ?? true;
           const votingActive = !!currentIssue && currentIssue.vote_cards_status === 'hidden';
           const hasVoted = votingActive && isVoter &&
             (currentIssue.votes ?? []).some(v => v.participant.uid === participant.uid);
@@ -575,24 +647,52 @@ function Room() {
                 </IconButton>
               )}
               <Chip
-                label={participant.role === 'spectator' ? '👁 Watch' : '🃏 Vote'}
+                label={`${ROLE_META[participant.role]?.emoji ?? '🃏'} ${ROLE_META[participant.role]?.label ?? participant.role}`}
                 size="small"
+                onClick={e => { setRoleMenuAnchor(e.currentTarget); setRoleMenuTarget(participant.uid); }}
                 sx={{
-                  height: 18, fontSize: 10, fontWeight: 600, flexShrink: 0,
-                  bgcolor: participant.role === 'spectator'
-                    ? 'rgba(148,163,184,0.1)'
-                    : 'rgba(99,102,241,0.12)',
-                  color: participant.role === 'spectator' ? '#64748b' : '#818cf8',
-                  border: participant.role === 'spectator'
-                    ? '1px solid rgba(148,163,184,0.15)'
-                    : '1px solid rgba(99,102,241,0.2)',
+                  height: 20, fontSize: 10, fontWeight: 600, flexShrink: 0, cursor: 'pointer',
+                  bgcolor: ROLE_META[participant.role]?.canVote
+                    ? 'rgba(99,102,241,0.12)' : 'rgba(148,163,184,0.08)',
+                  color: ROLE_META[participant.role]?.canVote ? '#818cf8' : '#64748b',
+                  border: ROLE_META[participant.role]?.canVote
+                    ? '1px solid rgba(99,102,241,0.2)' : '1px solid rgba(148,163,184,0.12)',
                   '& .MuiChip-label': { px: 0.75 },
+                  '&:hover': { opacity: 0.8 },
                 }}
               />
             </ListItem>
           );
         })}
       </List>
+      <Menu
+        anchorEl={roleMenuAnchor}
+        open={Boolean(roleMenuAnchor)}
+        onClose={() => { setRoleMenuAnchor(null); setRoleMenuTarget(null); }}
+        PaperProps={{ sx: { bgcolor: '#1e293b', border: '1px solid rgba(148,163,184,0.1)', borderRadius: 2, minWidth: 160 } }}
+      >
+        <Typography variant="caption" sx={{ px: 2, pt: 1, pb: 0.5, display: 'block', color: '#475569', fontWeight: 600, letterSpacing: 1 }}>
+          CHANGE ROLE
+        </Typography>
+        {ROLES.map(r => {
+          const current = participants.find(p => p.uid === roleMenuTarget)?.role;
+          return (
+            <MenuItem key={r.value} onClick={() => handleChangeRole(roleMenuTarget, r.value)}
+              sx={{
+                fontSize: 13, gap: 1,
+                color: current === r.value ? '#818cf8' : '#94a3b8',
+                fontWeight: current === r.value ? 700 : 400,
+                '&:hover': { bgcolor: 'rgba(99,102,241,0.1)', color: '#818cf8' },
+              }}>
+              <span>{r.emoji}</span>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 'inherit', color: 'inherit', lineHeight: 1.2 }}>{r.label}</Typography>
+                <Typography variant="caption" sx={{ color: r.canVote ? '#6366f1' : '#475569', fontSize: 10 }}>{r.canVote ? 'votes' : 'watches'}</Typography>
+              </Box>
+            </MenuItem>
+          );
+        })}
+      </Menu>
     </Box>
   );
 
@@ -618,6 +718,34 @@ function Room() {
             >♠</Box>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#f1f5f9', cursor: 'pointer' }} onClick={() => navigate('/')}>Planning Poker</Typography>
             <Box sx={{ flexGrow: 1 }} />
+            <Chip
+              label={CARD_SET_LABELS[roomInfo?.card_set] ?? '🎯 Standard'}
+              size="small"
+              onClick={e => setCardSetMenuAnchor(e.currentTarget)}
+              sx={{
+                height: 22, fontSize: 10, flexShrink: 0,
+                bgcolor: 'rgba(99,102,241,0.12)', color: '#818cf8',
+                border: '1px solid rgba(99,102,241,0.3)', cursor: 'pointer',
+                '& .MuiChip-label': { px: 0.75 },
+              }}
+            />
+            <Menu
+              anchorEl={cardSetMenuAnchor}
+              open={Boolean(cardSetMenuAnchor)}
+              onClose={() => setCardSetMenuAnchor(null)}
+              PaperProps={{ sx: { bgcolor: '#1e293b', border: '1px solid rgba(148,163,184,0.1)', borderRadius: 2 } }}
+            >
+              {CARD_SETS_LIST.map(cs => (
+                <MenuItem key={cs.value} onClick={() => handleChangeCardSet(cs.value)}
+                  sx={{
+                    fontSize: 13, color: roomInfo?.card_set === cs.value ? '#818cf8' : '#94a3b8',
+                    fontWeight: roomInfo?.card_set === cs.value ? 700 : 400,
+                    '&:hover': { bgcolor: 'rgba(99,102,241,0.1)', color: '#818cf8' },
+                  }}>
+                  {cs.label}
+                </MenuItem>
+              ))}
+            </Menu>
             <Chip
               label={copied ? 'Copied!' : roomUid}
               size="small"
@@ -646,7 +774,36 @@ function Room() {
 
         {/* Mobile content */}
         <Box sx={{ flexGrow: 1, overflow: 'hidden', mt: '52px', mb: 'calc(56px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }}>
-          {mobileTab === 0 && <Board currentIssue={currentIssue} roomUid={roomUid} cardSet={roomInfo?.card_set} timerActive={!!timerState} remainingSeconds={remainingSeconds} onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} reactions={reactions} onReaction={handleReaction} />}
+          {mobileTab === 0 && (
+            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              {/* Room title header */}
+              <Box sx={{ px: 2, pt: 1.5, pb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                {editingRoomTitle ? (
+                  <TextField
+                    autoFocus size="small" fullWidth
+                    value={roomTitleInput}
+                    onChange={e => setRoomTitleInput(e.target.value)}
+                    onBlur={handleSaveRoomTitle}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSaveRoomTitle(); if (e.key === 'Escape') setEditingRoomTitle(false); }}
+                    inputProps={{ style: { fontSize: 15, fontWeight: 700, color: '#f1f5f9' } }}
+                    sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(99,102,241,0.5)' } } }}
+                  />
+                ) : (
+                  <>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#f1f5f9', fontSize: '1.1rem', flexGrow: 1, lineHeight: 1.3 }}>
+                      {roomInfo?.title || '…'}
+                    </Typography>
+                    <Tooltip title="Rename room">
+                      <IconButton size="small" onClick={() => { setRoomTitleInput(roomInfo?.title || ''); setEditingRoomTitle(true); }} sx={{ color: '#334155', '&:hover': { color: '#818cf8' }, flexShrink: 0 }}>
+                        <EditIcon sx={{ fontSize: 14 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </>
+                )}
+              </Box>
+              <Board currentIssue={currentIssue} roomUid={roomUid} cardSet={roomInfo?.card_set} myRole={myRole} timerActive={!!timerState} remainingSeconds={remainingSeconds} onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} reactions={reactions} onReaction={handleReaction} />
+            </Box>
+          )}
           {mobileTab === 1 && (
             <Box sx={{ height: '100%', bgcolor: 'rgba(15,23,42,0.98)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               {issuesPanel}
@@ -738,6 +895,34 @@ function Room() {
             }}
           >♠</Box>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#f1f5f9', cursor: 'pointer' }} onClick={() => navigate('/')}>Planning Poker</Typography>
+          <Chip
+            label={CARD_SET_LABELS[roomInfo?.card_set] ?? '🎯 Standard'}
+            size="small"
+            onClick={e => setCardSetMenuAnchor(e.currentTarget)}
+            sx={{
+              height: 24, fontSize: 11,
+              bgcolor: 'rgba(99,102,241,0.12)', color: '#818cf8',
+              border: '1px solid rgba(99,102,241,0.3)', cursor: 'pointer',
+              '& .MuiChip-label': { px: 1 },
+            }}
+          />
+          <Menu
+            anchorEl={cardSetMenuAnchor}
+            open={Boolean(cardSetMenuAnchor)}
+            onClose={() => setCardSetMenuAnchor(null)}
+            PaperProps={{ sx: { bgcolor: '#1e293b', border: '1px solid rgba(148,163,184,0.1)', borderRadius: 2 } }}
+          >
+            {CARD_SETS_LIST.map(cs => (
+              <MenuItem key={cs.value} onClick={() => handleChangeCardSet(cs.value)}
+                sx={{
+                  fontSize: 13, color: roomInfo?.card_set === cs.value ? '#818cf8' : '#94a3b8',
+                  fontWeight: roomInfo?.card_set === cs.value ? 700 : 400,
+                  '&:hover': { bgcolor: 'rgba(99,102,241,0.1)', color: '#818cf8' },
+                }}>
+                {cs.label}
+              </MenuItem>
+            ))}
+          </Menu>
           <Box sx={{ flexGrow: 1 }} />
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>Room ID:</Typography>
           <Chip label={roomUid} size="small" sx={{
@@ -775,7 +960,39 @@ function Room() {
 
       <Box component="main" sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <Toolbar />
-        <Board currentIssue={currentIssue} roomUid={roomUid} cardSet={roomInfo?.card_set} timerActive={!!timerState} remainingSeconds={remainingSeconds} onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} reactions={reactions} onReaction={handleReaction} />
+        {/* Room title header */}
+        <Box sx={{
+          px: 3, py: 1.5,
+          borderBottom: '1px solid rgba(148,163,184,0.06)',
+          display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0,
+        }}>
+          {editingRoomTitle ? (
+            <TextField
+              autoFocus size="small"
+              value={roomTitleInput}
+              onChange={e => setRoomTitleInput(e.target.value)}
+              onBlur={handleSaveRoomTitle}
+              onKeyDown={e => { if (e.key === 'Enter') handleSaveRoomTitle(); if (e.key === 'Escape') setEditingRoomTitle(false); }}
+              inputProps={{ style: { fontSize: 16, fontWeight: 700, color: '#f1f5f9' } }}
+              sx={{
+                minWidth: 240,
+                '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(99,102,241,0.5)' } }
+              }}
+            />
+          ) : (
+            <>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#f1f5f9', fontSize: '1.1rem', lineHeight: 1 }}>
+                {roomInfo?.title || '…'}
+              </Typography>
+              <Tooltip title="Rename room">
+                <IconButton size="small" onClick={() => { setRoomTitleInput(roomInfo?.title || ''); setEditingRoomTitle(true); }} sx={{ color: '#334155', '&:hover': { color: '#818cf8' } }}>
+                  <EditIcon sx={{ fontSize: 14 }} />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Box>
+        <Board currentIssue={currentIssue} roomUid={roomUid} cardSet={roomInfo?.card_set} myRole={myRole} timerActive={!!timerState} remainingSeconds={remainingSeconds} onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} reactions={reactions} onReaction={handleReaction} />
       </Box>
 
       <Drawer variant="permanent" anchor="right" sx={{

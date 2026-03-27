@@ -1,93 +1,61 @@
-# PlanningPoker-Front
+# PlanningPoker Front
 
-This is an font-end client for PlanningPoker application
-This application is created to handle PlanningPoker estimating sessions of scrum agile methodology
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React front-end for the PlanningPoker application — real-time planning sessions for scrum/agile teams.
 
-## Addresses
+## Features
 
-* [PlanningPoker Website](http://scrumplanning.ir)
-* [PlanningPoker API Doc](http://82.102.10.119:8080/redoc/) 
-* [PlanningPoker API](http://82.102.10.119:8080) 
+- Create and join rooms (public or password-protected)
+- Participant roles: **Dev**, **Designer**, **PM**, **EM** — with role picker on join and in-room switching
+- Card sets: Standard, Fibonacci, T-Shirt Sizes — selectable per room
+- Real-time voting: submit, flip cards, reset board
+- Issue management: create, rename, delete, set active issue
+- In-room chat over WebSocket
+- Voting timer (start/stop, visible to all participants)
+- Emoji reactions
+- Rename yourself in-room
+- Session summary page with full vote history
+- Dark theme UI, mobile-responsive
 
-## Available Scripts
+## Quick Start (Docker)
 
-In the project directory, you can run:
+Run everything together with Docker Compose from the repo root:
 
-### `npm start`
+```sh
+docker compose up --build
+```
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Front-end is available at `http://localhost:3000`.
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+## Manual Setup
 
-### `npm test`
+### Requirements
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Node.js 16+
+- The [PlanningPoker API](https://github.com/erfantahriri/PlanningPoker-API) running on port 8000
 
-### `npm run build`
+### Run
 
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```sh
+npm install
+npm start
+```
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+Open `http://localhost:3000`.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Build for production
 
-### `npm run eject`
+```sh
+npm run build
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## Environment
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The API base URL is set in `src/services/api.js`. When running via Docker Compose it is configured automatically via `REACT_APP_API_URL`.
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## Related
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+- [PlanningPoker-API](https://github.com/erfantahriri/PlanningPoker-API)
 
-## Learn More
+## License
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
-
-## Get involved!
-
-We are happy to receive PR, bug reports, fixes and other improvements.
-
-Please report bugs via the
-[github issue tracker](https://github.com/erfantahriri/PlanningPoker-Front/issues).
-
-Master [git repository](https://github.com/erfantahriri/PlanningPoker-Front):
-
-* `git clone https://github.com/erfantahriri/PlanningPoker-Front`
-
-## Licensing
-
-This library is GPL-3.0 licenced.
+GPL-3.0

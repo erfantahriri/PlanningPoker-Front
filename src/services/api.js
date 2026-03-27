@@ -59,7 +59,7 @@ export const getRoomInfo = (roomUid) => {
 }
 
 // No auth — public endpoint
-export const createRoom = (title, description, creator_name, is_private = false, password = '', card_set = 'standard') => {
+export const createRoom = (title, description, creator_name, is_private = false, password = '', card_set = 'standard', creator_role = 'dev') => {
 	return fetch(urls.createRoom, {
 		method: 'POST',
 		headers: {
@@ -72,6 +72,7 @@ export const createRoom = (title, description, creator_name, is_private = false,
 			is_private: is_private,
 			password: password,
 			card_set: card_set,
+			creator_role: creator_role,
 		})
 	})
 		.then(response => {
@@ -236,6 +237,24 @@ export const updateIssue = (roomUid, issueUid, title, estimatedPoints) => {
 		.catch(err => console.log(err))
 }
 
+export const updateParticipant = (roomUid, participantUid, fields) => {
+	return fetch(urls.getRoomParticipants.replace('roomUid', roomUid) + '/' + participantUid, {
+		method: 'PATCH',
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": localStorage.getItem('accessToken')
+		},
+		body: JSON.stringify(fields)
+	})
+		.then(response => {
+			if (response.status === 200) return response.json();
+			return response.json().catch(() => ({})).then(data => {
+				toastr.error(data?.detail || `Could not update participant (${response.status}).`);
+			});
+		})
+		.catch(err => { toastr.error('Could not update participant.'); console.log(err); })
+}
+
 export const renameParticipant = (roomUid, participantUid, name) => {
 	return fetch(urls.getRoomParticipants.replace('roomUid', roomUid) + '/' + participantUid, {
 		method: 'PATCH',
@@ -266,6 +285,22 @@ export const deleteIssue = (roomUid, issueUid) => {
 			if (response.status === 204) {
 				return "OK";
 			}
+		})
+		.catch(err => console.log(err))
+}
+
+export const updateRoom = (roomUid, { title, card_set } = {}) => {
+	return fetch(baseUrl + `/v1/rooms/${roomUid}`, {
+		method: 'PATCH',
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": localStorage.getItem('accessToken')
+		},
+		body: JSON.stringify({ title, card_set })
+	})
+		.then(response => {
+			if (handleAuthError(response)) return;
+			if (response.status === 200) return response.json();
 		})
 		.catch(err => console.log(err))
 }

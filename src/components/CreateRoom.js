@@ -26,6 +26,7 @@ function CreateRoom({ onCreated }) {
   const [isPrivate, setIsPrivate] = useState(false);
   const [password, setPassword] = useState('');
   const [cardSet, setCardSet] = useState('standard');
+  const [creatorRole, setCreatorRole] = useState('dev');
 
   const createRoomOnClick = (event) => {
     event.preventDefault();
@@ -33,13 +34,14 @@ function CreateRoom({ onCreated }) {
       toastr.error('Please set a password for the private room.');
       return;
     }
-    createRoom(title, description, creator, isPrivate, isPrivate ? password : '', cardSet)
+    createRoom(title, description, creator, isPrivate, isPrivate ? password : '', cardSet, creatorRole)
       .then(data => {
         if (data) {
           localStorage.setItem("accessToken", data.creator.access_token);
           localStorage.setItem("userUid", data.creator.uid);
           localStorage.setItem("userName", creator);
-          localStorage.setItem("userRole", "voter");
+          localStorage.setItem("userRole", creatorRole);
+          localStorage.setItem("roomUid", data.uid);
           if (onCreated) onCreated(data);
           navigate("/rooms/" + data.uid);
         } else {
@@ -75,6 +77,39 @@ function CreateRoom({ onCreated }) {
         <TextField label="Your Name" variant="outlined" required fullWidth
           value={creator} onChange={e => setCreator(e.target.value)}
           inputProps={{ style: { fontSize: 16 } }} sx={fieldSx} />
+
+        {/* Role picker */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+          {[
+            { value: 'dev', label: '🧑‍💻 Dev', desc: 'Estimates story points' },
+            { value: 'designer', label: '🎨 Designer', desc: 'Estimates design tasks' },
+            { value: 'pm', label: '📋 PM', desc: 'Facilitates, watch only' },
+            { value: 'em', label: '👔 EM', desc: 'Observes, watch only' },
+          ].map(opt => (
+            <Box
+              key={opt.value}
+              onClick={() => setCreatorRole(opt.value)}
+              sx={{
+                p: 1.5, borderRadius: 2, cursor: 'pointer',
+                border: creatorRole === opt.value
+                  ? '2px solid #6366f1'
+                  : '1px solid rgba(148,163,184,0.15)',
+                bgcolor: creatorRole === opt.value
+                  ? 'rgba(99,102,241,0.1)'
+                  : 'rgba(15,23,42,0.4)',
+                transition: 'all 0.15s',
+                '&:active': { transform: 'scale(0.98)' },
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 700, color: creatorRole === opt.value ? '#818cf8' : '#94a3b8' }}>
+                {opt.label}
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#475569', lineHeight: 1.3 }}>
+                {opt.desc}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
 
         {/* Private toggle */}
         <Box sx={{ display: 'flex', gap: 1 }}>
