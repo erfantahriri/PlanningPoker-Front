@@ -16,7 +16,7 @@ const fieldSx = {
   },
 };
 
-function CreateRoom() {
+function CreateRoom({ onCreated }) {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -29,7 +29,11 @@ function CreateRoom() {
         if (data) {
           localStorage.setItem("accessToken", data.creator.access_token);
           localStorage.setItem("userUid", data.creator.uid);
-          navigate("/rooms/" + data.uid);
+          if (onCreated) {
+            onCreated(data);
+          } else {
+            navigate("/rooms/" + data.uid);
+          }
         } else {
           toastr.error("Something went wrong!");
         }
