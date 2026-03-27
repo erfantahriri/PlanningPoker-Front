@@ -4,7 +4,14 @@ import StoryPointCard from './Card';
 import VoteCard from './VoteCard';
 import { submitRoomIssueVote, updateIssue, flipIssueVoteCards, removeIssueVotes } from '../services/api';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -93,6 +100,7 @@ export class Board extends Component {
     updateIssueDialogOpen: false,
     currentIssueEstimatedPoints: undefined,
     timerMenuAnchor: null,
+    confirmResetOpen: false,
   }
 
   get storyPoints() {
@@ -141,10 +149,11 @@ export class Board extends Component {
   }
 
   render() {
-    const { currentIssue, timerActive, remainingSeconds, onTimerStart, onTimerStop, reactions, onReaction } = this.props;
+    const { currentIssue, timerActive, remainingSeconds, onTimerStart, onTimerStop, reactions, onReaction, myRole } = this.props;
     const hasIssue = !!currentIssue;
     const votes = currentIssue?.votes ?? [];
-    const isSpectator = localStorage.getItem('userRole') === 'spectator';
+    const NON_VOTING_ROLES = new Set(['pm', 'em', 'spectator']);
+    const isSpectator = NON_VOTING_ROLES.has(myRole ?? localStorage.getItem('userRole'));
 
     return (
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: { xs: 1.5, sm: 3 } }}>
@@ -224,11 +233,12 @@ export class Board extends Component {
                       <StyleIcon sx={{ fontSize: 18 }} />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Reset votes">
-                    <IconButton size="small" onClick={this.handleClickResetBoard} sx={{
-                      width: 36, height: 36, color: '#94a3b8',
-                      bgcolor: 'rgba(148,163,184,0.08)', border: '1px solid rgba(148,163,184,0.12)', borderRadius: 2,
-                      '&:hover': { bgcolor: 'rgba(148,163,184,0.15)' },
+                  <Divider orientation="vertical" flexItem sx={{ borderColor: 'rgba(148,163,184,0.1)', mx: 0.25 }} />
+                  <Tooltip title="Reset votes — clears all votes for this issue">
+                    <IconButton size="small" onClick={() => this.setState({ confirmResetOpen: true })} sx={{
+                      width: 36, height: 36, color: '#f43f5e',
+                      bgcolor: 'rgba(244,63,94,0.07)', border: '1px solid rgba(244,63,94,0.2)', borderRadius: 2,
+                      '&:hover': { bgcolor: 'rgba(244,63,94,0.18)', borderColor: 'rgba(244,63,94,0.45)' },
                     }}>
                       <AutorenewIcon sx={{ fontSize: 18 }} />
                     </IconButton>
@@ -328,6 +338,39 @@ export class Board extends Component {
             ))}
           </Box>
         )}
+
+        <Dialog
+          open={this.state.confirmResetOpen}
+          onClose={() => this.setState({ confirmResetOpen: false })}
+          PaperProps={{ sx: { bgcolor: '#1e293b', border: '1px solid rgba(244,63,94,0.25)', borderRadius: 3, minWidth: 300 } }}
+        >
+          <DialogTitle sx={{ color: '#f1f5f9', fontWeight: 700, pb: 1 }}>Reset votes?</DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ color: '#94a3b8' }}>
+              This will clear all votes for the current issue. This cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+            <Button
+              onClick={() => this.setState({ confirmResetOpen: false })}
+              sx={{ color: '#64748b', '&:hover': { color: '#94a3b8' } }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => { this.setState({ confirmResetOpen: false }); this.handleClickResetBoard(); }}
+              sx={{
+                bgcolor: 'rgba(244,63,94,0.15)', color: '#f43f5e',
+                border: '1px solid rgba(244,63,94,0.3)',
+                boxShadow: 'none',
+                '&:hover': { bgcolor: 'rgba(244,63,94,0.28)', boxShadow: 'none' },
+              }}
+            >
+              Reset
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <UpdateIssueComponent
           updateIssueDialogOpen={this.state.updateIssueDialogOpen}
