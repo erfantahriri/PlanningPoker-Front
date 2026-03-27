@@ -59,7 +59,7 @@ export const getRoomInfo = (roomUid) => {
 }
 
 // No auth — public endpoint
-export const createRoom = (title, description, creator_name, is_private = false, password = '') => {
+export const createRoom = (title, description, creator_name, is_private = false, password = '', card_set = 'standard') => {
 	return fetch(urls.createRoom, {
 		method: 'POST',
 		headers: {
@@ -71,6 +71,7 @@ export const createRoom = (title, description, creator_name, is_private = false,
 			creator_name: creator_name,
 			is_private: is_private,
 			password: password,
+			card_set: card_set,
 		})
 	})
 		.then(response => {

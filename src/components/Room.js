@@ -76,6 +76,9 @@ function Room() {
   const [editingIssueTitle, setEditingIssueTitle] = useState('');
   const [editingMyName, setEditingMyName] = useState(false);
   const [myNameInput, setMyNameInput] = useState('');
+  const [timerState, setTimerState] = useState(null); // { duration, startedAt }
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [reactions, setReactions] = useState([]);
   const rightTabRef = useRef(0);
   const mobileTabRef = useRef(0);
 
@@ -130,6 +133,43 @@ function Room() {
       .then(data => { if (!data) toastr.error("Something went wrong!"); })
       .catch(error => console.log(error));
     if (isMobile) setMobileTab(0);
+  };
+
+  useEffect(() => {
+    if (!timerState) return;
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - new Date(timerState.startedAt)) / 1000);
+      const remaining = timerState.duration - elapsed;
+      if (remaining <= 0) {
+        setRemainingSeconds(0);
+        setTimerState(null);
+        clearInterval(interval);
+      } else {
+        setRemainingSeconds(remaining);
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [timerState]);
+
+  const handleTimerStart = (duration) => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+    ws.current.send(JSON.stringify({ type: 'timer_start', content: { duration } }));
+  };
+
+  const handleTimerStop = () => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+    ws.current.send(JSON.stringify({ type: 'timer_stop', content: {} }));
+  };
+
+  const handleReaction = (emoji) => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+    ws.current.send(JSON.stringify({
+      type: 'reaction',
+      content: {
+        participantName: localStorage.getItem('userName') || 'Someone',
+        emoji,
+      },
+    }));
   };
 
   const handleDeleteIssue = (e, issueUid) => {
@@ -227,6 +267,19 @@ function Room() {
             setChatMessages(prev => [...prev, message.content]);
             const isOnChat = mobileTabRef.current === 2 || rightTabRef.current === 1;
             if (!isOnChat) setUnreadCount(c => c + 1);
+            break;
+          case "timer_start":
+            setTimerState({ duration: message.content.duration, startedAt: message.content.started_at });
+            setRemainingSeconds(message.content.duration);
+            break;
+          case "timer_stop":
+            setTimerState(null);
+            setRemainingSeconds(0);
+            break;
+          case "reaction":
+            const reaction = { ...message.content, _key: message.content.id };
+            setReactions(prev => [...prev, reaction]);
+            setTimeout(() => setReactions(prev => prev.filter(r => r._key !== reaction._key)), 3000);
             break;
           default:
             break;
@@ -593,7 +646,7 @@ function Room() {
 
         {/* Mobile content */}
         <Box sx={{ flexGrow: 1, overflow: 'hidden', mt: '52px', mb: 'calc(56px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }}>
-          {mobileTab === 0 && <Board currentIssue={currentIssue} roomUid={roomUid} />}
+          {mobileTab === 0 && <Board currentIssue={currentIssue} roomUid={roomUid} cardSet={roomInfo?.card_set} timerActive={!!timerState} remainingSeconds={remainingSeconds} onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} reactions={reactions} onReaction={handleReaction} />}
           {mobileTab === 1 && (
             <Box sx={{ height: '100%', bgcolor: 'rgba(15,23,42,0.98)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               {issuesPanel}
@@ -722,7 +775,7 @@ function Room() {
 
       <Box component="main" sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <Toolbar />
-        <Board currentIssue={currentIssue} roomUid={roomUid} />
+        <Board currentIssue={currentIssue} roomUid={roomUid} cardSet={roomInfo?.card_set} timerActive={!!timerState} remainingSeconds={remainingSeconds} onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} reactions={reactions} onReaction={handleReaction} />
       </Box>
 
       <Drawer variant="permanent" anchor="right" sx={{
