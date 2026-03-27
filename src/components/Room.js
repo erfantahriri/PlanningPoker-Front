@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   getRoomIssues, getRoomParticipants, createIssue,
   getRoomCurrentIssue, setRoomCurrentIssue, joinRoom
@@ -31,6 +31,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -46,6 +47,7 @@ const BaseRoomWsUrl = `ws://127.0.0.1:8000/ws/rooms/`;
 
 function Room() {
   const { roomUid } = useParams();
+  const navigate = useNavigate();
   const ws = useRef(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -86,6 +88,14 @@ function Room() {
     navigator.clipboard.writeText(roomUid);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExit = () => {
+    if (ws.current) ws.current.close();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('userUid');
+    localStorage.removeItem('userName');
+    navigate('/');
   };
 
   const handleCreateIssue = () => {
@@ -363,6 +373,11 @@ function Room() {
                 fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
               }}
             />
+            <Tooltip title="Leave room">
+              <IconButton size="small" onClick={handleExit} sx={{ color: '#f43f5e', ml: 0.5 }}>
+                <ExitToAppIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Toolbar>
         </AppBar>
 
@@ -466,6 +481,11 @@ function Room() {
           <Tooltip title={copied ? "Copied!" : "Copy Room ID"}>
             <IconButton size="small" onClick={handleCopyRoomId} sx={{ color: 'text.secondary' }}>
               <ContentCopyIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Leave room">
+            <IconButton size="small" onClick={handleExit} sx={{ color: '#f43f5e' }}>
+              <ExitToAppIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Toolbar>
