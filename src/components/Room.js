@@ -206,13 +206,18 @@ function Room() {
         background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', px: 2,
       }}>
-        <Box sx={{
-          width: 40, height: 40, borderRadius: '12px',
-          background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 20, userSelect: 'none', mb: 3,
-          boxShadow: '0 8px 32px rgba(99,102,241,0.4)',
-        }}>♠</Box>
+        <Box
+          onClick={() => navigate('/')}
+          sx={{
+            width: 40, height: 40, borderRadius: '12px',
+            background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 20, userSelect: 'none', mb: 3, cursor: 'pointer',
+            boxShadow: '0 8px 32px rgba(99,102,241,0.4)',
+            transition: 'transform 0.15s, box-shadow 0.15s',
+            '&:hover': { transform: 'scale(1.08)', boxShadow: '0 8px 40px rgba(99,102,241,0.6)' },
+          }}
+        >♠</Box>
         <Paper elevation={0} sx={{
           p: { xs: 3, sm: 4 }, width: '100%', maxWidth: 420,
           background: 'rgba(30,41,59,0.85)', border: '1px solid rgba(148,163,184,0.1)',
@@ -439,13 +444,16 @@ function Room() {
           bgcolor: 'rgba(15,23,42,0.95)', borderBottom: '1px solid rgba(148,163,184,0.08)', backdropFilter: 'blur(12px)',
         }}>
           <Toolbar sx={{ gap: 1.5, minHeight: '52px !important', px: 2 }}>
-            <Box sx={{
-              width: 28, height: 28, borderRadius: '8px',
-              background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, userSelect: 'none', flexShrink: 0,
-            }}>♠</Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#f1f5f9' }}>Planning Poker</Typography>
+            <Box
+              onClick={() => navigate('/')}
+              sx={{
+                width: 28, height: 28, borderRadius: '8px',
+                background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 14, userSelect: 'none', flexShrink: 0, cursor: 'pointer',
+              }}
+            >♠</Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#f1f5f9', cursor: 'pointer' }} onClick={() => navigate('/')}>Planning Poker</Typography>
             <Box sx={{ flexGrow: 1 }} />
             <Chip
               label={copied ? 'Copied!' : roomUid}
@@ -552,13 +560,16 @@ function Room() {
         bgcolor: 'rgba(15,23,42,0.95)', borderBottom: '1px solid rgba(148,163,184,0.08)', backdropFilter: 'blur(12px)',
       }}>
         <Toolbar sx={{ gap: 2 }}>
-          <Box sx={{
-            width: 32, height: 32, borderRadius: '8px',
-            background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16, userSelect: 'none', flexShrink: 0,
-          }}>♠</Box>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#f1f5f9' }}>Planning Poker</Typography>
+          <Box
+            onClick={() => navigate('/')}
+            sx={{
+              width: 32, height: 32, borderRadius: '8px',
+              background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, userSelect: 'none', flexShrink: 0, cursor: 'pointer',
+            }}
+          >♠</Box>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#f1f5f9', cursor: 'pointer' }} onClick={() => navigate('/')}>Planning Poker</Typography>
           <Box sx={{ flexGrow: 1 }} />
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>Room ID:</Typography>
           <Chip label={roomUid} size="small" sx={{

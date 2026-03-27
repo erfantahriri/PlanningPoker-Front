@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -10,6 +10,7 @@ import Divider from '@mui/material/Divider';
 import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import AddIcon from '@mui/icons-material/Add';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import LockIcon from '@mui/icons-material/Lock';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
@@ -71,15 +72,35 @@ function RoomsListPage() {
       px: 2, py: 6,
     }}>
 
+      {/* Back button */}
+      <Box sx={{ width: '100%', maxWidth: 640, mb: 2 }}>
+        <Button
+          component={Link}
+          to="/"
+          startIcon={<ArrowBackIcon />}
+          sx={{ color: '#475569', '&:hover': { color: '#818cf8' } }}
+        >
+          Home
+        </Button>
+      </Box>
+
       {/* Hero */}
       <Box sx={{ textAlign: 'center', mb: 6 }}>
-        <Box sx={{
-          width: 64, height: 64, borderRadius: '18px',
-          background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          mx: 'auto', mb: 3, fontSize: 32, userSelect: 'none',
-          boxShadow: '0 0 40px rgba(99,102,241,0.4)',
-        }}>♠</Box>
+        <Box
+          component={Link}
+          to="/"
+          sx={{
+            width: 64, height: 64, borderRadius: '18px',
+            background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            mx: 'auto', mb: 3, fontSize: 32, userSelect: 'none',
+            boxShadow: '0 0 40px rgba(99,102,241,0.4)',
+            textDecoration: 'none',
+            cursor: 'pointer',
+            transition: 'transform 0.15s, box-shadow 0.15s',
+            '&:hover': { transform: 'scale(1.05)', boxShadow: '0 0 56px rgba(99,102,241,0.6)' },
+          }}
+        >♠</Box>
         <Typography variant="h3" sx={{ fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.5px', mb: 1, fontSize: { xs: '2rem', sm: '3rem' } }}>
           Planning Poker
         </Typography>
