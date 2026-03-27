@@ -166,7 +166,7 @@ function Room() {
     ws.current.send(JSON.stringify({
       type: 'reaction',
       content: {
-        participantName: localStorage.getItem('userName') || 'Someone',
+        participantName: localStorage.getItem('userName') || '',
         emoji,
       },
     }));

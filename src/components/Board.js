@@ -79,7 +79,9 @@ function FloatingReactions({ reactions }) {
           }}
         >
           <Typography sx={{ fontSize: 28, lineHeight: 1 }}>{r.emoji}</Typography>
-          <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: 10, whiteSpace: 'nowrap' }}>{r.participantName}</Typography>
+          {r.participantName && (
+            <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: 10, whiteSpace: 'nowrap' }}>{r.participantName}</Typography>
+          )}
         </Box>
       ))}
     </Box>

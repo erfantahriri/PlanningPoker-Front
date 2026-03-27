@@ -38,6 +38,8 @@ function CreateRoom({ onCreated }) {
         if (data) {
           localStorage.setItem("accessToken", data.creator.access_token);
           localStorage.setItem("userUid", data.creator.uid);
+          localStorage.setItem("userName", creator);
+          localStorage.setItem("userRole", "voter");
           if (onCreated) onCreated(data);
           navigate("/rooms/" + data.uid);
         } else {
