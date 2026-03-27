@@ -368,11 +368,21 @@ function Room() {
                 primary={isMe ? `${participant.name} (you)` : participant.name}
                 primaryTypographyProps={{ variant: 'body2', fontWeight: isMe ? 600 : 400, color: isMe ? '#f1f5f9' : 'text.secondary' }}
               />
-              {participant.role === 'spectator' && (
-                <Tooltip title="Spectator">
-                  <VisibilityIcon sx={{ fontSize: 14, color: '#475569', flexShrink: 0 }} />
-                </Tooltip>
-              )}
+              <Chip
+                label={participant.role === 'spectator' ? '👁 Watch' : '🃏 Vote'}
+                size="small"
+                sx={{
+                  height: 18, fontSize: 10, fontWeight: 600, flexShrink: 0,
+                  bgcolor: participant.role === 'spectator'
+                    ? 'rgba(148,163,184,0.1)'
+                    : 'rgba(99,102,241,0.12)',
+                  color: participant.role === 'spectator' ? '#64748b' : '#818cf8',
+                  border: participant.role === 'spectator'
+                    ? '1px solid rgba(148,163,184,0.15)'
+                    : '1px solid rgba(99,102,241,0.2)',
+                  '& .MuiChip-label': { px: 0.75 },
+                }}
+              />
             </ListItem>
           );
         })}
