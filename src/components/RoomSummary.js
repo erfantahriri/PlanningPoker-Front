@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DownloadIcon from '@mui/icons-material/Download';
 import PendingIcon from '@mui/icons-material/Pending';
 import PeopleIcon from '@mui/icons-material/People';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
@@ -109,6 +110,8 @@ function RoomSummary() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handlePrint = () => window.print();
+
   const estimatedCount = summary?.issues.filter(i => i.estimated_points).length ?? 0;
   const voterCount = summary?.participants.filter(p => p.role === 'voter').length ?? 0;
 
@@ -118,11 +121,25 @@ function RoomSummary() {
       background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       px: 2, py: 6,
+      '@media print': {
+        background: '#fff',
+        color: '#000',
+        py: 2,
+      },
     }}>
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          body { background: #fff !important; color: #000 !important; }
+          .MuiPaper-root { background: #f8f8f8 !important; color: #000 !important; border: 1px solid #ddd !important; }
+          .MuiTypography-root { color: #000 !important; }
+          .MuiChip-root { border: 1px solid #aaa !important; }
+        }
+      `}</style>
       <Box sx={{ width: '100%', maxWidth: 720 }}>
 
         {/* Top nav */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+        <Box className="no-print" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate(`/rooms/${roomUid}`)}
@@ -186,18 +203,28 @@ function RoomSummary() {
             Issues
           </Typography>
           {!loading && summary && (
-            <Button
-              size="small"
-              startIcon={<ContentCopyIcon sx={{ fontSize: 14 }} />}
-              onClick={handleCopy}
-              sx={{
-                fontSize: 12,
-                color: copied ? '#10b981' : '#475569',
-                '&:hover': { color: copied ? '#10b981' : '#818cf8' },
-              }}
-            >
-              {copied ? 'Copied!' : 'Copy as Markdown'}
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                size="small"
+                startIcon={<ContentCopyIcon sx={{ fontSize: 14 }} />}
+                onClick={handleCopy}
+                sx={{
+                  fontSize: 12,
+                  color: copied ? '#10b981' : '#475569',
+                  '&:hover': { color: copied ? '#10b981' : '#818cf8' },
+                }}
+              >
+                {copied ? 'Copied!' : 'Copy as Markdown'}
+              </Button>
+              <Button
+                size="small"
+                startIcon={<DownloadIcon sx={{ fontSize: 14 }} />}
+                onClick={handlePrint}
+                sx={{ fontSize: 12, color: '#475569', '&:hover': { color: '#818cf8' } }}
+              >
+                Download PDF
+              </Button>
+            </Box>
           )}
         </Box>
 

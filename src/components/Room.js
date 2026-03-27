@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getRoomIssues, getRoomParticipants, createIssue,
-  getRoomCurrentIssue, setRoomCurrentIssue, joinRoom, getRoomInfo
+  getRoomCurrentIssue, setRoomCurrentIssue, joinRoom, getRoomInfo,
+  deleteIssue, updateIssue, renameParticipant
 } from '../services/api';
 import toastr from 'toastr';
 import AppBar from '@mui/material/AppBar';
@@ -32,6 +33,8 @@ import { useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import EditIcon from '@mui/icons-material/Edit';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -69,6 +72,10 @@ function Room() {
   const [mobileTab, setMobileTab] = useState(0); // 0=board 1=issues 2=chat 3=people
   const [chatMessages, setChatMessages] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [editingIssueUid, setEditingIssueUid] = useState(null);
+  const [editingIssueTitle, setEditingIssueTitle] = useState('');
+  const [editingMyName, setEditingMyName] = useState(false);
+  const [myNameInput, setMyNameInput] = useState('');
   const rightTabRef = useRef(0);
   const mobileTabRef = useRef(0);
 
@@ -125,6 +132,47 @@ function Room() {
     if (isMobile) setMobileTab(0);
   };
 
+  const handleDeleteIssue = (e, issueUid) => {
+    e.stopPropagation();
+    deleteIssue(roomUid, issueUid)
+      .then(res => {
+        if (res) setIssues(prev => prev.filter(i => i.uid !== issueUid));
+        else toastr.error('Could not delete issue.');
+      });
+  };
+
+  const handleStartRenameIssue = (e, issue) => {
+    e.stopPropagation();
+    setEditingIssueUid(issue.uid);
+    setEditingIssueTitle(issue.title);
+  };
+
+  const handleSaveRenameIssue = (issue) => {
+    if (!editingIssueTitle.trim() || editingIssueTitle === issue.title) {
+      setEditingIssueUid(null);
+      return;
+    }
+    updateIssue(roomUid, issue.uid, editingIssueTitle.trim(), issue.estimated_points)
+      .then(data => {
+        if (data) setIssues(prev => prev.map(i => i.uid === data.uid ? data : i));
+        setEditingIssueUid(null);
+      });
+  };
+
+  const handleSaveMyName = () => {
+    const trimmed = myNameInput.trim();
+    if (!trimmed) { setEditingMyName(false); return; }
+    const myUidLocal = localStorage.getItem('userUid');
+    renameParticipant(roomUid, myUidLocal, trimmed)
+      .then(data => {
+        if (data) {
+          localStorage.setItem('userName', trimmed);
+          setParticipants(prev => prev.map(p => p.uid === myUidLocal ? { ...p, name: trimmed } : p));
+        }
+        setEditingMyName(false);
+      });
+  };
+
   const handleSendChat = (text) => {
     if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
     const myUid = localStorage.getItem('userUid');
@@ -161,6 +209,9 @@ function Room() {
             break;
           case "add_participant":
             setParticipants(prev => [message.content, ...prev]);
+            break;
+          case "rename_participant":
+            setParticipants(prev => prev.map(p => p.uid === message.content.uid ? { ...p, name: message.content.name } : p));
             break;
           case "current_issue":
             setCurrentIssue(message.content);
@@ -309,16 +360,16 @@ function Room() {
         )}
         {issues.map(issue => (
           <ListItem
-            button
             key={issue.uid}
-            onClick={() => issueItemOnClick(issue)}
+            onClick={() => editingIssueUid !== issue.uid && issueItemOnClick(issue)}
             sx={{
               borderRadius: 2, mb: 0.5, px: 1.5, alignItems: 'flex-start',
               minHeight: isMobile ? 56 : 48,
               bgcolor: issue.is_current ? 'rgba(99,102,241,0.1)' : 'transparent',
               border: issue.is_current ? '1px solid rgba(99,102,241,0.25)' : '1px solid transparent',
-              '&:hover': { bgcolor: 'rgba(148,163,184,0.05)' },
-              '&:active': { bgcolor: 'rgba(99,102,241,0.15)' },
+              cursor: editingIssueUid === issue.uid ? 'default' : 'pointer',
+              '&:hover': { bgcolor: editingIssueUid === issue.uid ? undefined : 'rgba(148,163,184,0.05)' },
+              '&:hover .issue-actions': { opacity: 1 },
             }}
           >
             <Box sx={{ mt: 0.4, mr: 1.5, flexShrink: 0 }}>
@@ -328,18 +379,48 @@ function Room() {
               }
             </Box>
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-              <Typography variant="body2" sx={{
-                fontWeight: issue.is_current ? 600 : 400,
-                color: issue.is_current ? '#f1f5f9' : 'text.secondary',
-                lineHeight: 1.4, whiteSpace: 'normal',
-              }}>{issue.title}</Typography>
-              {issue.estimated_points && (
-                <Chip label={issue.estimated_points} size="small" sx={{
-                  mt: 0.5, height: 18, fontSize: 10,
-                  bgcolor: 'rgba(16,185,129,0.15)', color: '#34d399',
-                }} />
+              {editingIssueUid === issue.uid ? (
+                <TextField
+                  autoFocus
+                  size="small"
+                  fullWidth
+                  value={editingIssueTitle}
+                  onChange={e => setEditingIssueTitle(e.target.value)}
+                  onBlur={() => handleSaveRenameIssue(issue)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleSaveRenameIssue(issue);
+                    if (e.key === 'Escape') setEditingIssueUid(null);
+                  }}
+                  onClick={e => e.stopPropagation()}
+                  inputProps={{ style: { fontSize: 13 } }}
+                  sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(99,102,241,0.5)' } } }}
+                />
+              ) : (
+                <>
+                  <Typography variant="body2" sx={{
+                    fontWeight: issue.is_current ? 600 : 400,
+                    color: issue.is_current ? '#f1f5f9' : 'text.secondary',
+                    lineHeight: 1.4, whiteSpace: 'normal',
+                  }}>{issue.title}</Typography>
+                  {issue.estimated_points && (
+                    <Chip label={issue.estimated_points} size="small" sx={{
+                      mt: 0.5, height: 18, fontSize: 10,
+                      bgcolor: 'rgba(16,185,129,0.15)', color: '#34d399',
+                    }} />
+                  )}
+                </>
               )}
             </Box>
+            {editingIssueUid !== issue.uid && (
+              <Box className="issue-actions" sx={{ display: 'flex', gap: 0.25, opacity: isMobile ? 1 : 0, transition: 'opacity 0.15s', flexShrink: 0 }}>
+                <IconButton size="small" onClick={e => handleStartRenameIssue(e, issue)} sx={{ color: '#475569', '&:hover': { color: '#818cf8' } }}>
+                  <EditIcon sx={{ fontSize: 14 }} />
+                </IconButton>
+                <IconButton size="small" onClick={e => handleDeleteIssue(e, issue.uid)} sx={{ color: '#475569', '&:hover': { color: '#f43f5e' } }}>
+                  <DeleteOutlineIcon sx={{ fontSize: 14 }} />
+                </IconButton>
+              </Box>
+            )}
           </ListItem>
         ))}
       </List>
@@ -408,10 +489,38 @@ function Room() {
                   </Tooltip>
                 )}
               </Box>
-              <ListItemText
-                primary={isMe ? `${participant.name} (you)` : participant.name}
-                primaryTypographyProps={{ variant: 'body2', fontWeight: isMe ? 600 : 400, color: isMe ? '#f1f5f9' : 'text.secondary' }}
-              />
+              {isMe && editingMyName ? (
+                <TextField
+                  autoFocus
+                  size="small"
+                  value={myNameInput}
+                  onChange={e => setMyNameInput(e.target.value)}
+                  onBlur={handleSaveMyName}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleSaveMyName();
+                    if (e.key === 'Escape') setEditingMyName(false);
+                  }}
+                  inputProps={{ style: { fontSize: 13 } }}
+                  sx={{
+                    flexGrow: 1, mr: 1,
+                    '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(99,102,241,0.5)' } }
+                  }}
+                />
+              ) : (
+                <ListItemText
+                  primary={isMe ? `${participant.name} (you)` : participant.name}
+                  primaryTypographyProps={{ variant: 'body2', fontWeight: isMe ? 600 : 400, color: isMe ? '#f1f5f9' : 'text.secondary' }}
+                />
+              )}
+              {isMe && !editingMyName && (
+                <IconButton
+                  size="small"
+                  onClick={() => { setMyNameInput(participant.name); setEditingMyName(true); }}
+                  sx={{ color: '#334155', '&:hover': { color: '#818cf8' }, mr: 0.5, flexShrink: 0 }}
+                >
+                  <EditIcon sx={{ fontSize: 13 }} />
+                </IconButton>
+              )}
               <Chip
                 label={participant.role === 'spectator' ? '👁 Watch' : '🃏 Vote'}
                 size="small"

@@ -235,6 +235,22 @@ export const updateIssue = (roomUid, issueUid, title, estimatedPoints) => {
 		.catch(err => console.log(err))
 }
 
+export const renameParticipant = (roomUid, participantUid, name) => {
+	return fetch(urls.getRoomParticipants.replace('roomUid', roomUid) + '/' + participantUid, {
+		method: 'PATCH',
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": localStorage.getItem('accessToken')
+		},
+		body: JSON.stringify({ name })
+	})
+		.then(response => {
+			if (handleAuthError(response)) return;
+			if (response.status === 200) return response.json();
+		})
+		.catch(err => console.log(err))
+}
+
 export const deleteIssue = (roomUid, issueUid) => {
 	return fetch(urls.issue
 		.replace('roomUid', roomUid)
