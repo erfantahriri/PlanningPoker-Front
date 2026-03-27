@@ -30,6 +30,7 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -468,6 +469,11 @@ function Room() {
                 fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
               }}
             />
+            <Tooltip title="Session summary">
+              <IconButton size="small" onClick={() => navigate(`/rooms/${roomUid}/summary`)} sx={{ color: '#475569', '&:hover': { color: '#818cf8' } }}>
+                <AssessmentIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Leave room">
               <IconButton size="small" onClick={handleExit} sx={{ color: '#f43f5e', ml: 0.5 }}>
                 <ExitToAppIcon fontSize="small" />
@@ -579,6 +585,11 @@ function Room() {
           <Tooltip title={copied ? "Copied!" : "Copy Room ID"}>
             <IconButton size="small" onClick={handleCopyRoomId} sx={{ color: 'text.secondary' }}>
               <ContentCopyIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Session summary">
+            <IconButton size="small" onClick={() => navigate(`/rooms/${roomUid}/summary`)} sx={{ color: '#475569', '&:hover': { color: '#818cf8' } }}>
+              <AssessmentIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Leave room">

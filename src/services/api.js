@@ -41,6 +41,15 @@ export const getRooms = () => {
 }
 
 // No auth — public endpoint
+export const getRoomSummary = (roomUid) => {
+	return fetch(baseUrl + `/v1/rooms/${roomUid}/summary`)
+		.then(response => {
+			if (response.status === 200) return response.json();
+		})
+		.catch(err => console.log(err))
+}
+
+// No auth — public endpoint
 export const getRoomInfo = (roomUid) => {
 	return fetch(urls.roomInfo.replace('roomUid', roomUid))
 		.then(response => {
