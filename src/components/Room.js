@@ -6,6 +6,9 @@ import {
 } from '../services/api';
 import toastr from 'toastr';
 import AppBar from '@mui/material/AppBar';
+import Badge from '@mui/material/Badge';
+import BottomNavigation from '@mui/material/BottomNavigation';
+import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -24,9 +27,15 @@ import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import CreateIssueComponent from './CreateIssue';
 import Board from './Board';
@@ -38,6 +47,8 @@ const BaseRoomWsUrl = `ws://127.0.0.1:8000/ws/rooms/`;
 function Room() {
   const { roomUid } = useParams();
   const ws = useRef(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [joined, setJoined] = useState(!!localStorage.getItem('accessToken'));
   const [nameInput, setNameInput] = useState('');
@@ -48,9 +59,11 @@ function Room() {
   const [currentIssue, setCurrentIssue] = useState(undefined);
   const [copied, setCopied] = useState(false);
   const [rightTab, setRightTab] = useState(0);
+  const [mobileTab, setMobileTab] = useState(0); // 0=board 1=issues 2=chat 3=people
   const [chatMessages, setChatMessages] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const rightTabRef = useRef(0);
+  const mobileTabRef = useRef(0);
 
   const handleJoin = (e) => {
     e.preventDefault();
@@ -88,6 +101,7 @@ function Room() {
     setRoomCurrentIssue(roomUid, issue.uid)
       .then(data => { if (!data) toastr.error("Something went wrong!"); })
       .catch(error => console.log(error));
+    if (isMobile) setMobileTab(0);
   };
 
   const handleSendChat = (text) => {
@@ -139,7 +153,8 @@ function Room() {
             break;
           case "chat_message":
             setChatMessages(prev => [...prev, message.content]);
-            if (rightTabRef.current !== 1) setUnreadCount(c => c + 1);
+            const isOnChat = mobileTabRef.current === 2 || rightTabRef.current === 1;
+            if (!isOnChat) setUnreadCount(c => c + 1);
             break;
           default:
             break;
@@ -163,34 +178,37 @@ function Room() {
 
   const myUid = localStorage.getItem('userUid');
 
+  // ── Join screen ────────────────────────────────────────────────────────────
   if (!joined) {
     return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', px: 2,
-        }}
-      >
+      <Box sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', px: 2,
+      }}>
         <Box sx={{
-          width: 32, height: 32, borderRadius: '8px',
+          width: 40, height: 40, borderRadius: '12px',
           background: 'linear-gradient(135deg, #6366f1, #818cf8)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 16, userSelect: 'none', mb: 3,
+          fontSize: 20, userSelect: 'none', mb: 3,
+          boxShadow: '0 8px 32px rgba(99,102,241,0.4)',
         }}>♠</Box>
         <Paper elevation={0} sx={{
-          p: 4, width: '100%', maxWidth: 400,
-          background: 'rgba(30,41,59,0.85)', border: '1px solid rgba(148,163,184,0.1)', backdropFilter: 'blur(12px)',
+          p: { xs: 3, sm: 4 }, width: '100%', maxWidth: 420,
+          background: 'rgba(30,41,59,0.85)', border: '1px solid rgba(148,163,184,0.1)',
+          backdropFilter: 'blur(12px)', borderRadius: 3,
         }}>
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>Join Room</Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>Room ID</Typography>
           <Chip label={roomUid} sx={{
-            mb: 3, fontFamily: 'monospace', fontWeight: 600,
+            mb: 3, fontFamily: 'monospace', fontWeight: 600, maxWidth: '100%',
             bgcolor: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)',
           }} />
           <Box component="form" onSubmit={handleJoin} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField label="Your Name" variant="outlined" required fullWidth autoFocus
+            <TextField
+              label="Your Name" variant="outlined" required fullWidth autoFocus
               value={nameInput} onChange={e => setNameInput(e.target.value)}
+              inputProps={{ style: { fontSize: 16 } }}
               sx={{ '& .MuiOutlinedInput-root': {
                 '& fieldset': { borderColor: 'rgba(148,163,184,0.2)' },
                 '&:hover fieldset': { borderColor: 'rgba(99,102,241,0.5)' },
@@ -198,9 +216,10 @@ function Room() {
               }}}
             />
             <Button type="submit" variant="contained" size="large" fullWidth sx={{
-              py: 1.5, background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+              py: 1.75, fontSize: 16,
+              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
               boxShadow: '0 4px 20px rgba(99,102,241,0.35)',
-              '&:hover': { background: 'linear-gradient(135deg, #818cf8, #6366f1)', boxShadow: '0 4px 28px rgba(99,102,241,0.5)' },
+              '&:hover': { background: 'linear-gradient(135deg, #818cf8, #6366f1)' },
             }}>Enter Room</Button>
           </Box>
         </Paper>
@@ -208,11 +227,224 @@ function Room() {
     );
   }
 
+  // ── Shared panels ──────────────────────────────────────────────────────────
+  const issuesPanel = (
+    <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden' }}>
+      <List sx={{ px: 1, py: 1, flexGrow: 1, overflowY: 'auto' }}>
+        {issues.length === 0 && (
+          <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
+            <Typography variant="body2">No issues yet.</Typography>
+            <Typography variant="caption">Add one to get started.</Typography>
+          </Box>
+        )}
+        {issues.map(issue => (
+          <ListItem
+            button
+            key={issue.uid}
+            onClick={() => issueItemOnClick(issue)}
+            sx={{
+              borderRadius: 2, mb: 0.5, px: 1.5, alignItems: 'flex-start',
+              minHeight: isMobile ? 56 : 48,
+              bgcolor: issue.is_current ? 'rgba(99,102,241,0.1)' : 'transparent',
+              border: issue.is_current ? '1px solid rgba(99,102,241,0.25)' : '1px solid transparent',
+              '&:hover': { bgcolor: 'rgba(148,163,184,0.05)' },
+              '&:active': { bgcolor: 'rgba(99,102,241,0.15)' },
+            }}
+          >
+            <Box sx={{ mt: 0.4, mr: 1.5, flexShrink: 0 }}>
+              {issue.is_current
+                ? <CheckCircleIcon sx={{ fontSize: 18, color: '#6366f1' }} />
+                : <RadioButtonUncheckedIcon sx={{ fontSize: 18, color: '#475569' }} />
+              }
+            </Box>
+            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+              <Typography variant="body2" sx={{
+                fontWeight: issue.is_current ? 600 : 400,
+                color: issue.is_current ? '#f1f5f9' : 'text.secondary',
+                lineHeight: 1.4, whiteSpace: 'normal',
+              }}>{issue.title}</Typography>
+              {issue.estimated_points && (
+                <Chip label={issue.estimated_points} size="small" sx={{
+                  mt: 0.5, height: 18, fontSize: 10,
+                  bgcolor: 'rgba(16,185,129,0.15)', color: '#34d399',
+                }} />
+              )}
+            </Box>
+          </ListItem>
+        ))}
+      </List>
+      <Box sx={{ p: 2 }}>
+        <Fab
+          color="primary"
+          variant="extended"
+          size="medium"
+          onClick={() => setCreateIssueDialogOpen(true)}
+          sx={{
+            width: '100%',
+            background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+            boxShadow: '0 4px 16px rgba(99,102,241,0.35)',
+            '&:hover': { background: 'linear-gradient(135deg, #818cf8, #6366f1)' },
+          }}
+        >
+          <AddIcon sx={{ mr: 1 }} />
+          Add Issue
+        </Fab>
+      </Box>
+    </Box>
+  );
+
+  const participantsPanel = (
+    <Box sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
+      <Box sx={{ p: 2, pb: 1, display: 'flex', alignItems: 'center' }}>
+        <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 1.5 }}>
+          Participants
+        </Typography>
+        <Chip label={participants.length} size="small"
+          sx={{ ml: 1, bgcolor: 'rgba(99,102,241,0.15)', color: '#818cf8', height: 18, fontSize: 11 }} />
+      </Box>
+      <Divider sx={{ borderColor: 'rgba(148,163,184,0.08)' }} />
+      <List sx={{ px: 1, py: 1, overflowY: 'auto', flexGrow: 1 }}>
+        {participants.map(participant => {
+          const isMe = myUid === participant.uid;
+          const initials = participant.name.slice(0, 2).toUpperCase();
+          return (
+            <ListItem key={participant.uid} sx={{
+              borderRadius: 2, mb: 0.5, px: 1.5,
+              minHeight: isMobile ? 56 : 48,
+              bgcolor: isMe ? 'rgba(99,102,241,0.08)' : 'transparent',
+            }}>
+              <Box sx={{
+                width: 36, height: 36, borderRadius: '50%', flexShrink: 0, mr: 1.5,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, fontWeight: 700,
+                background: isMe ? 'linear-gradient(135deg, #6366f1, #818cf8)' : 'rgba(148,163,184,0.15)',
+                color: isMe ? '#fff' : '#94a3b8',
+              }}>{initials}</Box>
+              <ListItemText
+                primary={isMe ? `${participant.name} (you)` : participant.name}
+                primaryTypographyProps={{ variant: 'body2', fontWeight: isMe ? 600 : 400, color: isMe ? '#f1f5f9' : 'text.secondary' }}
+              />
+            </ListItem>
+          );
+        })}
+      </List>
+    </Box>
+  );
+
+  // ── MOBILE LAYOUT ──────────────────────────────────────────────────────────
+  if (isMobile) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
+        <CssBaseline />
+
+        <AppBar position="fixed" elevation={0} sx={{
+          zIndex: t => t.zIndex.drawer + 1,
+          bgcolor: 'rgba(15,23,42,0.95)', borderBottom: '1px solid rgba(148,163,184,0.08)', backdropFilter: 'blur(12px)',
+        }}>
+          <Toolbar sx={{ gap: 1.5, minHeight: '52px !important', px: 2 }}>
+            <Box sx={{
+              width: 28, height: 28, borderRadius: '8px',
+              background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14, userSelect: 'none', flexShrink: 0,
+            }}>♠</Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#f1f5f9' }}>Planning Poker</Typography>
+            <Box sx={{ flexGrow: 1 }} />
+            <Chip
+              label={copied ? 'Copied!' : roomUid}
+              size="small"
+              onClick={handleCopyRoomId}
+              icon={<ContentCopyIcon sx={{ fontSize: '12px !important', color: `${copied ? '#34d399' : '#818cf8'} !important` }} />}
+              sx={{
+                fontFamily: 'monospace', fontSize: 11, maxWidth: 130,
+                bgcolor: copied ? 'rgba(16,185,129,0.12)' : 'rgba(99,102,241,0.12)',
+                color: copied ? '#34d399' : '#818cf8',
+                border: `1px solid ${copied ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.3)'}`,
+                fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+              }}
+            />
+          </Toolbar>
+        </AppBar>
+
+        {/* Mobile content */}
+        <Box sx={{ flexGrow: 1, overflow: 'hidden', mt: '52px', mb: 'calc(56px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }}>
+          {mobileTab === 0 && <Board currentIssue={currentIssue} roomUid={roomUid} />}
+          {mobileTab === 1 && (
+            <Box sx={{ height: '100%', bgcolor: 'rgba(15,23,42,0.98)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              {issuesPanel}
+            </Box>
+          )}
+          {mobileTab === 2 && (
+            <Box sx={{ height: '100%', bgcolor: 'rgba(15,23,42,0.98)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <Chat messages={chatMessages} onSend={handleSendChat} />
+            </Box>
+          )}
+          {mobileTab === 3 && (
+            <Box sx={{ height: '100%', bgcolor: 'rgba(15,23,42,0.98)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              {participantsPanel}
+            </Box>
+          )}
+        </Box>
+
+        {/* Bottom Nav */}
+        <Paper elevation={0} sx={{
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          zIndex: t => t.zIndex.appBar,
+          bgcolor: 'rgba(15,23,42,0.97)',
+          borderTop: '1px solid rgba(148,163,184,0.08)',
+          backdropFilter: 'blur(12px)',
+        }}>
+          <BottomNavigation
+            value={mobileTab}
+            onChange={(_, v) => {
+              setMobileTab(v);
+              mobileTabRef.current = v;
+              if (v === 2) setUnreadCount(0);
+            }}
+            sx={{ bgcolor: 'transparent', height: 56, pb: 'env(safe-area-inset-bottom)' }}
+          >
+            <BottomNavigationAction label="Board" icon={<DashboardIcon />}
+              sx={{ color: '#475569', '&.Mui-selected': { color: '#818cf8' }, minWidth: 0, fontSize: 10 }} />
+            <BottomNavigationAction label="Issues" icon={<FormatListBulletedIcon />}
+              sx={{ color: '#475569', '&.Mui-selected': { color: '#818cf8' }, minWidth: 0, fontSize: 10 }} />
+            <BottomNavigationAction
+              label="Chat"
+              icon={
+                <Badge badgeContent={unreadCount} max={9}
+                  sx={{ '& .MuiBadge-badge': { bgcolor: '#6366f1', color: '#fff', fontSize: 9, minWidth: 15, height: 15, top: 2, right: -2 } }}>
+                  <ChatBubbleOutlineIcon />
+                </Badge>
+              }
+              sx={{ color: '#475569', '&.Mui-selected': { color: '#818cf8' }, minWidth: 0, fontSize: 10 }}
+            />
+            <BottomNavigationAction
+              label="People"
+              icon={
+                <Badge badgeContent={participants.length} max={99}
+                  sx={{ '& .MuiBadge-badge': { bgcolor: 'rgba(99,102,241,0.8)', color: '#fff', fontSize: 9, minWidth: 15, height: 15, top: 2, right: -2 } }}>
+                  <PeopleAltIcon />
+                </Badge>
+              }
+              sx={{ color: '#475569', '&.Mui-selected': { color: '#818cf8' }, minWidth: 0, fontSize: 10 }}
+            />
+          </BottomNavigation>
+        </Paper>
+
+        <CreateIssueComponent
+          createIssueDialogOpen={createIssueDialogOpen}
+          handleClose={() => setCreateIssueDialogOpen(false)}
+          handleCreateIssue={handleCreateIssue}
+          handleIssueTitleInputChange={(e) => setIssueTitle(e.target.value)}
+        />
+      </Box>
+    );
+  }
+
+  // ── DESKTOP LAYOUT ─────────────────────────────────────────────────────────
   return (
     <Box sx={{ display: 'flex', height: '100vh', bgcolor: 'background.default' }}>
       <CssBaseline />
 
-      {/* Top AppBar */}
       <AppBar position="fixed" elevation={0} sx={{
         zIndex: t => t.zIndex.drawer + 1,
         bgcolor: 'rgba(15,23,42,0.95)', borderBottom: '1px solid rgba(148,163,184,0.08)', backdropFilter: 'blur(12px)',
@@ -226,7 +458,7 @@ function Room() {
           }}>♠</Box>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#f1f5f9' }}>Planning Poker</Typography>
           <Box sx={{ flexGrow: 1 }} />
-          <Typography variant="body2" sx={{ color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}>Room ID:</Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>Room ID:</Typography>
           <Chip label={roomUid} size="small" sx={{
             fontFamily: 'monospace', bgcolor: 'rgba(99,102,241,0.12)',
             color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)', fontWeight: 600,
@@ -239,7 +471,6 @@ function Room() {
         </Toolbar>
       </AppBar>
 
-      {/* Left Drawer — Participants */}
       <Drawer variant="permanent" sx={{
         width: drawerWidth, flexShrink: 0,
         '& .MuiDrawer-paper': {
@@ -248,47 +479,14 @@ function Room() {
         },
       }}>
         <Toolbar />
-        <Box sx={{ p: 2, pb: 1 }}>
-          <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 1.5 }}>
-            Participants
-          </Typography>
-          <Chip label={participants.length} size="small"
-            sx={{ ml: 1, bgcolor: 'rgba(99,102,241,0.15)', color: '#818cf8', height: 18, fontSize: 11 }} />
-        </Box>
-        <Divider sx={{ borderColor: 'rgba(148,163,184,0.08)' }} />
-        <List sx={{ px: 1, py: 1 }}>
-          {participants.map(participant => {
-            const isMe = myUid === participant.uid;
-            const initials = participant.name.slice(0, 2).toUpperCase();
-            return (
-              <ListItem key={participant.uid} sx={{
-                borderRadius: 2, mb: 0.5, px: 1.5,
-                bgcolor: isMe ? 'rgba(99,102,241,0.08)' : 'transparent',
-              }}>
-                <Box sx={{
-                  width: 32, height: 32, borderRadius: '50%', flexShrink: 0, mr: 1.5,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 12, fontWeight: 700,
-                  background: isMe ? 'linear-gradient(135deg, #6366f1, #818cf8)' : 'rgba(148,163,184,0.15)',
-                  color: isMe ? '#fff' : '#94a3b8',
-                }}>{initials}</Box>
-                <ListItemText
-                  primary={isMe ? `${participant.name} (you)` : participant.name}
-                  primaryTypographyProps={{ variant: 'body2', fontWeight: isMe ? 600 : 400, color: isMe ? '#f1f5f9' : 'text.secondary' }}
-                />
-              </ListItem>
-            );
-          })}
-        </List>
+        {participantsPanel}
       </Drawer>
 
-      {/* Main Content */}
       <Box component="main" sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <Toolbar />
         <Board currentIssue={currentIssue} roomUid={roomUid} />
       </Box>
 
-      {/* Right Drawer — Issues + Chat */}
       <Drawer variant="permanent" anchor="right" sx={{
         width: drawerWidth, flexShrink: 0,
         '& .MuiDrawer-paper': {
@@ -298,8 +496,6 @@ function Room() {
         },
       }}>
         <Toolbar />
-
-        {/* Tabs */}
         <Tabs
           value={rightTab}
           onChange={(_, v) => { setRightTab(v); rightTabRef.current = v; if (v === 1) setUnreadCount(0); }}
@@ -333,54 +529,7 @@ function Room() {
           />
         </Tabs>
 
-        {/* Issues Panel */}
-        {rightTab === 0 && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden' }}>
-            <List sx={{ px: 1, py: 1, flexGrow: 1, overflowY: 'auto' }}>
-              {issues.map(issue => (
-                <ListItem button key={issue.uid} onClick={() => issueItemOnClick(issue)} sx={{
-                  borderRadius: 2, mb: 0.5, px: 1.5, alignItems: 'flex-start',
-                  bgcolor: issue.is_current ? 'rgba(99,102,241,0.1)' : 'transparent',
-                  border: issue.is_current ? '1px solid rgba(99,102,241,0.25)' : '1px solid transparent',
-                  '&:hover': { bgcolor: 'rgba(148,163,184,0.05)' },
-                }}>
-                  <Box sx={{ mt: 0.3, mr: 1.5, flexShrink: 0 }}>
-                    {issue.is_current
-                      ? <CheckCircleIcon sx={{ fontSize: 16, color: '#6366f1' }} />
-                      : <RadioButtonUncheckedIcon sx={{ fontSize: 16, color: '#475569' }} />
-                    }
-                  </Box>
-                  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                    <Typography variant="body2" noWrap sx={{
-                      fontWeight: issue.is_current ? 600 : 400,
-                      color: issue.is_current ? '#f1f5f9' : 'text.secondary', lineHeight: 1.4,
-                    }}>{issue.title}</Typography>
-                    {issue.estimated_points && (
-                      <Chip label={issue.estimated_points} size="small" sx={{
-                        mt: 0.5, height: 18, fontSize: 10,
-                        bgcolor: 'rgba(16,185,129,0.15)', color: '#34d399',
-                      }} />
-                    )}
-                  </Box>
-                </ListItem>
-              ))}
-            </List>
-            <Box sx={{ p: 2 }}>
-              <Fab color="primary" variant="extended" size="medium"
-                onClick={() => setCreateIssueDialogOpen(true)}
-                sx={{
-                  width: '100%', background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-                  boxShadow: '0 4px 16px rgba(99,102,241,0.35)',
-                  '&:hover': { background: 'linear-gradient(135deg, #818cf8, #6366f1)' },
-                }}>
-                <AddIcon sx={{ mr: 1 }} />
-                Add Issue
-              </Fab>
-            </Box>
-          </Box>
-        )}
-
-        {/* Chat Panel */}
+        {rightTab === 0 && issuesPanel}
         {rightTab === 1 && (
           <Box sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <Chat messages={chatMessages} onSend={handleSendChat} />
