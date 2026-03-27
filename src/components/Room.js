@@ -32,6 +32,7 @@ import { useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -54,6 +55,7 @@ function Room() {
 
   const [joined, setJoined] = useState(!!localStorage.getItem('accessToken'));
   const [nameInput, setNameInput] = useState('');
+  const [roleInput, setRoleInput] = useState('voter');
   const [issues, setIssues] = useState([]);
   const [participants, setParticipants] = useState([]);
   const [createIssueDialogOpen, setCreateIssueDialogOpen] = useState(false);
@@ -70,12 +72,13 @@ function Room() {
   const handleJoin = (e) => {
     e.preventDefault();
     if (!nameInput.trim()) return;
-    joinRoom(roomUid, nameInput.trim())
+    joinRoom(roomUid, nameInput.trim(), roleInput)
       .then(data => {
         if (data) {
           localStorage.setItem('accessToken', data.access_token);
           localStorage.setItem('userUid', data.uid);
           localStorage.setItem('userName', nameInput.trim());
+          localStorage.setItem('userRole', roleInput);
           setJoined(true);
         } else {
           toastr.error('Room not found or something went wrong.');
@@ -95,6 +98,7 @@ function Room() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('userUid');
     localStorage.removeItem('userName');
+    localStorage.removeItem('userRole');
     navigate('/');
   };
 
@@ -225,6 +229,36 @@ function Room() {
                 '&.Mui-focused fieldset': { borderColor: '#6366f1' },
               }}}
             />
+            {/* Role picker */}
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {[
+                { value: 'voter', label: '🃏 Voter', desc: 'Cast story point votes' },
+                { value: 'spectator', label: '👁 Spectator', desc: 'Watch without voting' },
+              ].map(opt => (
+                <Box
+                  key={opt.value}
+                  onClick={() => setRoleInput(opt.value)}
+                  sx={{
+                    flex: 1, p: 1.5, borderRadius: 2, cursor: 'pointer',
+                    border: roleInput === opt.value
+                      ? '2px solid #6366f1'
+                      : '1px solid rgba(148,163,184,0.15)',
+                    bgcolor: roleInput === opt.value
+                      ? 'rgba(99,102,241,0.1)'
+                      : 'rgba(15,23,42,0.4)',
+                    transition: 'all 0.15s',
+                    '&:active': { transform: 'scale(0.98)' },
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: roleInput === opt.value ? '#818cf8' : '#94a3b8' }}>
+                    {opt.label}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#475569', lineHeight: 1.3 }}>
+                    {opt.desc}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
             <Button type="submit" variant="contained" size="large" fullWidth sx={{
               py: 1.75, fontSize: 16,
               background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
@@ -334,6 +368,11 @@ function Room() {
                 primary={isMe ? `${participant.name} (you)` : participant.name}
                 primaryTypographyProps={{ variant: 'body2', fontWeight: isMe ? 600 : 400, color: isMe ? '#f1f5f9' : 'text.secondary' }}
               />
+              {participant.role === 'spectator' && (
+                <Tooltip title="Spectator">
+                  <VisibilityIcon sx={{ fontSize: 14, color: '#475569', flexShrink: 0 }} />
+                </Tooltip>
+              )}
             </ListItem>
           );
         })}

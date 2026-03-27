@@ -61,15 +61,13 @@ export const createRoom = (title, description, creator_name) => {
 }
 
 // No auth — public endpoint
-export const joinRoom = (roomUid, name) => {
+export const joinRoom = (roomUid, name, role = 'voter') => {
 	return fetch(urls.joinRoom.replace('roomUid', roomUid), {
 		method: 'POST',
 		headers: {
 			"Content-Type": "application/json"
 		},
-		body: JSON.stringify({
-			name: name,
-		})
+		body: JSON.stringify({ name, role })
 	})
 		.then(response => {
 			if (response.status === 201 || response.status === 200) {

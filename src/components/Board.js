@@ -8,6 +8,7 @@ import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import UpdateIssueComponent from './UpdateIssue';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import EditIcon from '@mui/icons-material/Edit';
@@ -66,6 +67,7 @@ export class Board extends Component {
     const { currentIssue } = this.props;
     const hasIssue = !!currentIssue;
     const votes = currentIssue?.votes ?? [];
+    const isSpectator = localStorage.getItem('userRole') === 'spectator';
 
     return (
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: { xs: 1.5, sm: 3 } }}>
@@ -174,30 +176,46 @@ export class Board extends Component {
           ))}
         </Box>
 
-        {/* Story Point Selection Bar */}
-        <Box sx={{
-          mt: { xs: 1.5, sm: 3 },
-          p: { xs: 1.5, sm: 2 },
-          borderRadius: 3,
-          bgcolor: 'rgba(30,41,59,0.6)',
-          border: '1px solid rgba(148,163,184,0.08)',
-          display: 'flex',
-          gap: { xs: 1, sm: 1.5 },
-          overflowX: 'auto',
-          opacity: hasIssue ? 1 : 0.4,
-          pointerEvents: hasIssue ? 'auto' : 'none',
-          WebkitOverflowScrolling: 'touch',
-          '&::-webkit-scrollbar': { height: 0 },
-        }}>
-          {this.storyPoints.map(sp => (
-            <StoryPointCard
-              key={sp}
-              storyPoint={sp}
-              isMyVote={this.isMyVote(sp)}
-              onClick={() => this.storyPointCardOnClick(sp)}
-            />
-          ))}
-        </Box>
+        {/* Story Point Selection Bar — voters only */}
+        {isSpectator ? (
+          <Box sx={{
+            mt: { xs: 1.5, sm: 3 },
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: 3,
+            bgcolor: 'rgba(30,41,59,0.4)',
+            border: '1px solid rgba(148,163,184,0.08)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
+          }}>
+            <VisibilityIcon sx={{ fontSize: 16, color: '#475569' }} />
+            <Typography variant="body2" sx={{ color: '#475569', fontWeight: 500 }}>
+              You are spectating — enjoy the show
+            </Typography>
+          </Box>
+        ) : (
+          <Box sx={{
+            mt: { xs: 1.5, sm: 3 },
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: 3,
+            bgcolor: 'rgba(30,41,59,0.6)',
+            border: '1px solid rgba(148,163,184,0.08)',
+            display: 'flex',
+            gap: { xs: 1, sm: 1.5 },
+            overflowX: 'auto',
+            opacity: hasIssue ? 1 : 0.4,
+            pointerEvents: hasIssue ? 'auto' : 'none',
+            WebkitOverflowScrolling: 'touch',
+            '&::-webkit-scrollbar': { height: 0 },
+          }}>
+            {this.storyPoints.map(sp => (
+              <StoryPointCard
+                key={sp}
+                storyPoint={sp}
+                isMyVote={this.isMyVote(sp)}
+                onClick={() => this.storyPointCardOnClick(sp)}
+              />
+            ))}
+          </Box>
+        )}
 
         <UpdateIssueComponent
           updateIssueDialogOpen={this.state.updateIssueDialogOpen}
