@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import CreateRoom from './CreateRoom';
 import JoinRoom from './JoinRoom';
 
@@ -49,6 +51,22 @@ export class Main extends Component {
           <Typography variant="body1" sx={{ color: '#94a3b8' }}>
             Real-time story point estimation for agile teams.
           </Typography>
+        </Box>
+
+        <Box sx={{ mb: 4 }}>
+          <Button
+            component={Link}
+            to="/rooms/"
+            variant="outlined"
+            startIcon={<MeetingRoomIcon />}
+            sx={{
+              borderColor: 'rgba(99,102,241,0.3)',
+              color: '#818cf8',
+              '&:hover': { borderColor: '#6366f1', background: 'rgba(99,102,241,0.08)' },
+            }}
+          >
+            Browse Rooms
+          </Button>
         </Box>
 
         {!this.state.action && (

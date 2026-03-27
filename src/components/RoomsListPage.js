@@ -12,7 +12,9 @@ import Typography from '@mui/material/Typography';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import PeopleIcon from '@mui/icons-material/People';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import TaskIcon from '@mui/icons-material/Task';
 import CreateRoom from './CreateRoom';
 import { getRooms } from '../services/api';
 
@@ -165,9 +167,23 @@ function RoomsListPage() {
                           {room.description}
                         </Typography>
                       )}
-                      <Typography variant="caption" sx={{ color: '#334155', mt: 1, display: 'block' }}>
-                        Created {formatDate(room.created)}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <PeopleIcon sx={{ fontSize: 12, color: '#475569' }} />
+                          <Typography variant="caption" sx={{ color: '#475569' }}>
+                            {room.participant_count ?? 0}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <TaskIcon sx={{ fontSize: 12, color: '#475569' }} />
+                          <Typography variant="caption" sx={{ color: '#475569' }}>
+                            {room.issue_count ?? 0} {room.issue_count === 1 ? 'issue' : 'issues'}
+                          </Typography>
+                        </Box>
+                        <Typography variant="caption" sx={{ color: '#334155' }}>
+                          {formatDate(room.created)}
+                        </Typography>
+                      </Box>
                     </Box>
                     <Box sx={{
                       flexShrink: 0,
