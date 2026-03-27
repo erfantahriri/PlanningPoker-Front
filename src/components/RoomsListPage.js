@@ -210,6 +210,13 @@ function RoomsListPage() {
                         <Typography variant="caption" sx={{ color: '#334155' }}>
                           {formatDate(room.created)}
                         </Typography>
+                        {room.card_set && room.card_set !== 'standard' && (
+                          <Chip
+                            label={{ fibonacci: '🌀 Fibonacci', tshirt: '👕 T-Shirt' }[room.card_set] ?? room.card_set}
+                            size="small"
+                            sx={{ height: 16, fontSize: 10, bgcolor: 'rgba(99,102,241,0.1)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.2)', '& .MuiChip-label': { px: 0.75 } }}
+                          />
+                        )}
                       </Box>
                     </Box>
                     <Box sx={{
