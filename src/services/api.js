@@ -33,7 +33,7 @@ export const getRooms = () => {
 	return fetch(urls.listRooms)
 		.then(response => {
 			if (response.status === 200) {
-				return response.json();
+				return response.json().then(data => data.results ?? data);
 			}
 		})
 		.catch(err => console.log(err))

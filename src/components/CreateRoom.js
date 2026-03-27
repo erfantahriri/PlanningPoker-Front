@@ -29,11 +29,8 @@ function CreateRoom({ onCreated }) {
         if (data) {
           localStorage.setItem("accessToken", data.creator.access_token);
           localStorage.setItem("userUid", data.creator.uid);
-          if (onCreated) {
-            onCreated(data);
-          } else {
-            navigate("/rooms/" + data.uid);
-          }
+          if (onCreated) onCreated(data);
+          navigate("/rooms/" + data.uid);
         } else {
           toastr.error("Something went wrong!");
         }
